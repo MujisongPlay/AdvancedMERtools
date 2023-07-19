@@ -1,5 +1,6 @@
 # AdvancedMERtools
 Advanced(actually helpful) tools for SCP: SL plugin MER (Map Editor Reborn)
+Download from above folder, and put them in your project.
 
 AutoScaler: It will help you making some grouped object scale up or down.
 
