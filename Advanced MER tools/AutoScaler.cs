@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -16,7 +16,7 @@ public class AutoScaler : MonoBehaviour
         }
         List<Transform> list = new List<Transform> { };
         list.AddRange(this.transform.GetComponentsInChildren<Transform>());
-        list.FindAll(x => x.transform.GetComponents<Component>().Length == 1).ForEach(x => 
+        list.FindAll(x => x.transform.GetComponents<Component>().Length == 1 || x == this.transform).ForEach(x => 
         {
             if (ResetPos) x.localPosition = Vector3.zero;
             if (ResetRot) x.localEulerAngles = Vector3.zero;
