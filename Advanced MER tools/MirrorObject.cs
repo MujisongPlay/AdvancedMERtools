@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -39,7 +39,7 @@ public class MirrorObject : MonoBehaviour
             Vector3 v = copy.transform.localPosition;
             copy.transform.localPosition = new Vector3(v.x * vector.x, v.y * vector.y, v.z * vector.z);
             v = copy.transform.localEulerAngles;
-            copy.transform.localEulerAngles = new Vector3(v.x * vector.z * vector.y, v.y * vector.y * vector.x, v.z * vector.x * vector.z);
+            copy.transform.localEulerAngles = new Vector3(v.x * vector.z * vector.y, v.y * vector.z * vector.x, v.z * vector.x * vector.y);
             copy.transform.localScale = game.transform.localScale;
             Duplicated.Add(copy);
         }
