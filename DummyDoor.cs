@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,22 +16,33 @@ namespace MERDummyDoorInstaller
     public class DummyDoor : MonoBehaviour
     {
         public DoorSerializable door;
-        public Door RealDoor;
+        public Door RealDoor = null;
 
         public Animator animator;
+
+        static Config config = MERDummyDoorInstaller.Singleton.Config;
 
         void Start()
         {
             MEC.Timing.CallDelayed(1f, () =>
             {
                 animator = this.transform.GetChild(0).GetComponent<Animator>();
-                foreach (DoorObject Door in GameObject.FindObjectsOfType<DoorObject>())
+                if (RealDoor == null)
                 {
-                    if (door == Door.Base)
+                    foreach (DoorObject Door in GameObject.FindObjectsOfType<DoorObject>())
                     {
-                        RealDoor = Door.Door;
-                        break;
+                        if (door == Door.Base)
+                        {
+                            RealDoor = Door.Door;
+                            break;
+                        }
                     }
+                }
+                this.transform.parent = RealDoor.Base.transform;
+                if (RealDoor.Base.Rooms.Length != 0)
+                {
+                    Destroy(this.gameObject);
+                    return;
                 }
                 Exiled.Events.Handlers.Player.InteractingDoor += OnInteractDoor;
             });
@@ -39,7 +50,7 @@ namespace MERDummyDoorInstaller
 
         public void OnInteractDoor(InteractingDoorEventArgs ev)
         {
-            if (ev.Door == RealDoor || ev.IsAllowed)
+            if (ev.Door.Base.transform == this.transform.parent && ev.IsAllowed)
             {
                 animator.Play(ev.Door.IsOpen ? "DoorClose" : "DoorOpen");
             }
