@@ -14,3 +14,9 @@ Arrange: Duplicate your objects and arrange them.
 Tutorial: https://youtu.be/adXuM0UINhE
 
 ![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/3249ec64-4bfc-4071-98fb-51d1052cc8e6)
+
+# DummyDoorSpawner
+
+Since doors are invisible out-boundary because of culling system. It will create dummy doors.
+
+Showcase: https://youtu.be/TLkXputvKFc
