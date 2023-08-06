@@ -64,13 +64,17 @@ namespace MERDummyDoorInstaller
         {
             if (!ev.IsAllowed) return;
             int index = config.DummyDoorInstallingMaps.IndexOf(ev.NewMap.Name);
-            if (index != -1)
+            if (index != -1 && ev.NewMap.Doors.Count != 0)
             {
+                bool flag = config.BlackListOfDummyDoor.TryGet<List<int>>(index, out List<int> element);
                 for (int i = 0; i < ev.NewMap.Doors.Count; i++)
                 {
-                    if (config.BlackListOfDummyDoor[index].Contains(i))
+                    if (flag)
                     {
-                        continue;
+                        if (element.Contains(i))
+                        {
+                            continue;
+                        }
                     }
                     string str = "DoorLCZ";
                     switch (ev.NewMap.Doors[i].DoorType)
