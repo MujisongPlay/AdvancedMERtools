@@ -10,8 +10,13 @@ Mirror: mirroring.
 
 Arrange: Duplicate your objects and arrange them.
 
+Health Object: Adding hitbox to your schematic. **Require plugin.**
+
+Text: text.
+
 **NOTION: Using same script from parent to children is designed to be not errored. But just in case, please use them individually. Idk what will happen but it wouldn't be that good.**
-Tutorial: https://youtu.be/adXuM0UINhE
+Tutorial(~Arrange): https://youtu.be/adXuM0UINhE
+Tutorial(~Text): https://youtu.be/UmkEbiVhDTE
 
 ![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/3249ec64-4bfc-4071-98fb-51d1052cc8e6)
 
