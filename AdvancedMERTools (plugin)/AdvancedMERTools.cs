@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -222,6 +222,11 @@ namespace AdvancedMERTools
                 AutoRun();
             }
         }
+
+        //public void InstallDoor(DoorObject door)
+        //{
+        //    ServerConsole.AddLog(".");
+        //}
 
         public void AutoRun()
         {
