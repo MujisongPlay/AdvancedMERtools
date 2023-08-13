@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +24,7 @@ namespace AdvancedMERTools
             Firearm firearm = ev.Player.CurrentItem as Firearm;
             float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
             Health -= damage;
+            Hitmarker.SendHitmarker(ev.Player.ReferenceHub, 1f);
             CheckDead(ev.Player);
         }
 
@@ -34,6 +35,8 @@ namespace AdvancedMERTools
             {
                 float Dis = Vector3.Distance(this.transform.position, ev.Position);
                 float damage = Dis < 4 ? 300f + Mathf.Max(0f, 30f * (Mathf.Pow(Dis, 2f) - Mathf.Pow(2f, Dis))) : 2160 / Dis - 240f;
+                damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
+                if (ev.Player != null) Hitmarker.SendHitmarker(ev.Player.ReferenceHub, 1f);
                 Health -= damage;
                 CheckDead(ev.Player);
             }
