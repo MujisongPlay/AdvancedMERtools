@@ -7,6 +7,7 @@ using UnityEngine;
 using Exiled.API.Features.Items;
 using InventorySystem.Items.Armor;
 using Exiled.API.Features;
+using Exiled.CustomItems.API.Features;
 
 namespace AdvancedMERTools
 {
@@ -21,6 +22,17 @@ namespace AdvancedMERTools
         public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
         {
             if (!ev.CanHurt || ev.Player == null || !IsAlive) return;
+            if (Base.whitelistWeapons.Count != 0)
+            {
+                if (CustomItem.TryGet(ev.Player.CurrentItem, out CustomItem custom))
+                {
+                    if (Base.whitelistWeapons.Find(x => x.CustomItemId == custom.Id) == null) return;
+                }
+                else
+                {
+                    if (Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ev.Player.CurrentItem.Type) == null) return;
+                }
+            }
             Firearm firearm = ev.Player.CurrentItem as Firearm;
             float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
             Health -= damage;
@@ -31,6 +43,7 @@ namespace AdvancedMERTools
         public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
             if (!ev.IsAllowed || !IsAlive) return;
+            if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0  && x.ItemType == ItemType.GrenadeHE) == null) return;
             if (ev.Projectile.Type == ItemType.GrenadeHE)
             {
                 float Dis = Vector3.Distance(this.transform.position, ev.Position);
@@ -73,6 +86,18 @@ namespace AdvancedMERTools
                         Health = Base.Health;
                         IsAlive = true;
                         break;
+                    case DeadType.PlayAnimation:
+                        if (animator != null)
+                        {
+                            if (Base.AnimationType == AnimationType.Start)
+                            {
+                                animator.speed = 1f;
+                                animator.Play(Base.AnimationName);
+                            }
+                            else
+                                animator.speed = 0f;
+                        }
+                        break;
                 }
             }
         }
@@ -100,5 +125,7 @@ namespace AdvancedMERTools
         public bool IsAlive = true;
 
         public HealthObjectDTO Base;
+
+        public Animator animator;
     }
 }
