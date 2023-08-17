@@ -86,6 +86,10 @@ namespace AdvancedMERTools
         public int ArmorEfficient;
         public DeadType DeadType;
         public string ObjectId;
+        public string Animator;
+        public string AnimationName;
+        public AnimationType AnimationType;
+        public List<WhitelistWeapon> whitelistWeapons;
     }
 
     [Serializable]
@@ -95,7 +99,22 @@ namespace AdvancedMERTools
         GetRigidbody,
         DynamicDisappearing,
         Explode,
-        ResetHP
+        ResetHP,
+        PlayAnimation
+    }
+
+    [Serializable]
+    public enum AnimationType
+    {
+        Start,
+        Stop
+    }
+
+    [Serializable]
+    public class WhitelistWeapon
+    {
+        public ItemType ItemType;
+        public uint CustomItemId;
     }
 
     //[Serializable]
@@ -169,7 +188,23 @@ namespace AdvancedMERTools
                             target = target.GetChild(int.Parse(dTO.ObjectId[i].ToString()));
                         }
                     }
-                    target.gameObject.AddComponent<HealthObject>().Base = dTO;
+                    HealthObject health = target.gameObject.AddComponent<HealthObject>();
+                    health.Base = dTO;
+                    if (dTO.DeadType == DeadType.PlayAnimation)
+                    {
+                        target = ev.Schematic.transform;
+                        if (dTO.Animator != "")
+                        {
+                            for (int i = dTO.Animator.Length - 1; i > -1; i--)
+                            {
+                                target = target.GetChild(int.Parse(dTO.Animator[i].ToString()));
+                            }
+                        }
+                        if (target.TryGetComponent<Animator>(out Animator animator))
+                        {
+                            health.animator = animator;
+                        }
+                    }
                 }
             }
             /*path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-DoorInstalling.json");
