@@ -85,11 +85,20 @@ namespace AdvancedMERTools
         public float Health;
         public int ArmorEfficient;
         public DeadType DeadType;
+        public float DeadDelay;
+        public float ResetHPTo;
         public string ObjectId;
         public string Animator;
         public string AnimationName;
         public AnimationType AnimationType;
         public List<WhitelistWeapon> whitelistWeapons;
+        public WarheadActionType warheadActionType;
+        public AnimationCurve AnimationCurve;
+        public string MessageContent;
+        public MessageType MessageType;
+        public SendType SendType;
+        public List<DropItem> dropItems;
+        public bool DoNotDestroyAfterDeath;
     }
 
     [Serializable]
@@ -100,7 +109,10 @@ namespace AdvancedMERTools
         DynamicDisappearing,
         Explode,
         ResetHP,
-        PlayAnimation
+        PlayAnimation,
+        Warhead,
+        SendMessage,
+        DropItems
     }
 
     [Serializable]
@@ -108,6 +120,42 @@ namespace AdvancedMERTools
     {
         Start,
         Stop
+    }
+
+    [Serializable]
+    public enum WarheadActionType
+    {
+        Start,
+        Stop,
+        Lock,
+        UnLock,
+        Disable,
+        Enable
+    }
+
+    [Serializable]
+    public enum MessageType
+    {
+        Cassie,
+        BroadCast,
+        Hint
+    }
+
+    [Serializable]
+    public enum SendType
+    {
+        Killer,
+        All
+    }
+
+    [Serializable]
+    public class DropItem
+    {
+        public ItemType ItemType;
+        public uint CustomItemId;
+        public int Count;
+        public float Chance;
+        public bool ForceSpawn;
     }
 
     [Serializable]
