@@ -14,6 +14,9 @@ public class HealthObject : MonoBehaviour
     public float Health = 0;
     public int ArmorEfficient = 0;
     public DeadType DeadType = DeadType.Disappear;
+    public float DeadActionDelay = 0f;
+    [ShowIf("KillCheck")]
+    public bool DoNotRemoveAfterDeath = false;
     [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
     public GameObject Animator = null;
     [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
@@ -21,8 +24,39 @@ public class HealthObject : MonoBehaviour
     [BoxGroup("Animation")]
     [ShowIf("DeadType", DeadType.PlayAnimation)]
     public AnimationType AnimationType = AnimationType.Start;
+    [BoxGroup("Warhead")]
+    [ShowIf("DeadType", DeadType.Warhead)]
+    public WarheadActionType warheadAction = WarheadActionType.Start;
+    [BoxGroup("ResetHP")]
+    [ShowIf("DeadType", DeadType.ResetHP)]
+    public float ResetHPTo = 0f;
     [ReorderableList]
     public List<WhitelistWeapon> whitelistWeapons = new List<WhitelistWeapon> { };
+    [BoxGroup("DynamicDisappear")] [ShowIf("DeadType", DeadType.DynamicDisappearing)]
+    public AnimationCurve DeathScaleDownAnimationCurve = new AnimationCurve();
+    [BoxGroup("Message")]
+    [ShowIf("DeadType", DeadType.SendMessage)]
+    public MessageType MessageType = MessageType.BroadCast;
+    [BoxGroup("Message")]
+    [ShowIf("DeadType", DeadType.SendMessage)]
+    public string MessageContent = "";
+    [BoxGroup("Message")]
+    [ShowIf("MessageShowCheck")]
+    public SendType SendType = SendType.Killer;
+    [BoxGroup("Drop items")]
+    [ShowIf("DeadType", DeadType.DropItems)]
+    [ReorderableList]
+    public List<DropItem> DropItems = new List<DropItem> { };
+
+    public bool KillCheck()
+    {
+        return DeadType == DeadType.Disappear || DeadType == DeadType.Explode || DeadType == DeadType.DynamicDisappearing;
+    }
+
+    public bool MessageShowCheck()
+    {
+        return DeadType == DeadType.SendMessage && MessageType != MessageType.Cassie;
+    }
 }
 
 [Serializable]
@@ -38,11 +72,20 @@ public class HealthObjectDTO
     public float Health;
     public int ArmorEfficient;
     public DeadType DeadType;
+    public float DeadDelay;
+    public float ResetHPTo;
     public string ObjectId;
     public string Animator;
     public string AnimationName;
     public AnimationType AnimationType;
     public List<WhitelistWeapon> whitelistWeapons;
+    public WarheadActionType warheadActionType;
+    public AnimationCurve AnimationCurve;
+    public string MessageContent;
+    public MessageType MessageType;
+    public SendType SendType;
+    public List<DropItem> dropItems;
+    public bool DoNotDestroyAfterDeath;
 }
 
 [Serializable]
@@ -53,7 +96,21 @@ public enum DeadType
     DynamicDisappearing,
     Explode,
     ResetHP,
-    PlayAnimation
+    PlayAnimation,
+    Warhead,
+    SendMessage,
+    DropItems
+}
+
+[Serializable]
+public enum WarheadActionType
+{
+    Start,
+    Stop,
+    Lock,
+    UnLock,
+    Disable,
+    Enable
 }
 
 [Serializable]
@@ -61,6 +118,31 @@ public enum AnimationType
 {
     Start,
     Stop
+}
+
+[Serializable]
+public enum MessageType
+{
+    Cassie,
+    BroadCast,
+    Hint
+}
+
+[Serializable]
+public enum SendType
+{
+    Killer,
+    All
+}
+
+[Serializable]
+public class DropItem
+{
+    public ItemType ItemType;
+    public uint CustomItemId;
+    public int Count;
+    public float Chance;
+    public bool ForceSpawn;
 }
 
 public class HealthObjectCompiler : MonoBehaviour
@@ -102,13 +184,34 @@ public class HealthObjectCompiler : MonoBehaviour
                 ArmorEfficient = health.ArmorEfficient,
                 DeadType = health.DeadType,
                 ObjectId = FindPath(health.transform),
-                whitelistWeapons = health.whitelistWeapons
+                whitelistWeapons = health.whitelistWeapons,
+                DeadDelay = health.DeadActionDelay,
+                DoNotDestroyAfterDeath = health.DoNotRemoveAfterDeath
             };
-            if (health.DeadType == DeadType.PlayAnimation)
+            switch (health.DeadType)
             {
-                dTO.Animator = FindPath(health.Animator.transform);
-                dTO.AnimationName = health.AnimationName;
-                dTO.AnimationType = health.AnimationType;
+                case DeadType.PlayAnimation:
+                    dTO.Animator = FindPath(health.Animator.transform);
+                    dTO.AnimationName = health.AnimationName;
+                    dTO.AnimationType = health.AnimationType;
+                    break;
+                case DeadType.Warhead:
+                    dTO.warheadActionType = health.warheadAction;
+                    break;
+                case DeadType.ResetHP:
+                    dTO.ResetHPTo = health.ResetHPTo;
+                    break;
+                case DeadType.DynamicDisappearing:
+                    dTO.AnimationCurve = health.DeathScaleDownAnimationCurve;
+                    break;
+                case DeadType.DropItems:
+                    dTO.dropItems = health.DropItems;
+                    break;
+                case DeadType.SendMessage:
+                    dTO.MessageType = health.MessageType;
+                    dTO.MessageContent = health.MessageContent;
+                    dTO.SendType = health.SendType;
+                    break;
             }
             healthObjects.Add(dTO);
         }
