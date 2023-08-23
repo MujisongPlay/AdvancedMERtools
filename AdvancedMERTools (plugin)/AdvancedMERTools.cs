@@ -99,6 +99,7 @@ namespace AdvancedMERTools
         public SendType SendType;
         public List<DropItem> dropItems;
         public bool DoNotDestroyAfterDeath;
+        public List<Commanding> commandings;
     }
 
     [Serializable]
@@ -112,7 +113,8 @@ namespace AdvancedMERTools
         PlayAnimation,
         Warhead,
         SendMessage,
-        DropItems
+        DropItems,
+        SendCommand
     }
 
     [Serializable]
@@ -163,6 +165,14 @@ namespace AdvancedMERTools
     {
         public ItemType ItemType;
         public uint CustomItemId;
+    }
+
+    [Serializable]
+    public class Commanding
+    {
+        public string CommandContext;
+        public float Chance;
+        public bool ForceExecute;
     }
 
     //[Serializable]
