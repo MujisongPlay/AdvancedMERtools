@@ -47,10 +47,15 @@ public class HealthObject : MonoBehaviour
     [ShowIf("DeadType", DeadType.DropItems)]
     [ReorderableList]
     public List<DropItem> DropItems = new List<DropItem> { };
+    [BoxGroup("Command")]
+    [ShowIf("DeadType", DeadType.SendCommand)]
+    [ReorderableList]
+    [Label("There's many formats you can see when you put on curser to 'command context'")]
+    public List<Commanding> Commandings = new List<Commanding> { };
 
     public bool KillCheck()
     {
-        return DeadType == DeadType.Disappear || DeadType == DeadType.Explode || DeadType == DeadType.DynamicDisappearing;
+        return DeadType == DeadType.Disappear || DeadType == DeadType.Explode || DeadType == DeadType.DynamicDisappearing || DeadType == DeadType.SendCommand;
     }
 
     public bool MessageShowCheck()
@@ -86,6 +91,7 @@ public class HealthObjectDTO
     public SendType SendType;
     public List<DropItem> dropItems;
     public bool DoNotDestroyAfterDeath;
+    public List<Commanding> commandings;
 }
 
 [Serializable]
@@ -99,7 +105,8 @@ public enum DeadType
     PlayAnimation,
     Warhead,
     SendMessage,
-    DropItems
+    DropItems,
+    SendCommand
 }
 
 [Serializable]
@@ -143,6 +150,15 @@ public class DropItem
     public int Count;
     public float Chance;
     public bool ForceSpawn;
+}
+
+[Serializable]
+public class Commanding
+{
+    [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
+    public string CommandContext;
+    public float Chance;
+    public bool ForceExecute;
 }
 
 public class HealthObjectCompiler : MonoBehaviour
@@ -211,6 +227,9 @@ public class HealthObjectCompiler : MonoBehaviour
                     dTO.MessageType = health.MessageType;
                     dTO.MessageContent = health.MessageContent;
                     dTO.SendType = health.SendType;
+                    break;
+                case DeadType.SendCommand:
+                    dTO.commandings = health.Commandings;
                     break;
             }
             healthObjects.Add(dTO);
