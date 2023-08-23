@@ -8,6 +8,9 @@ using Exiled.API.Features.Items;
 using InventorySystem.Items.Armor;
 using Exiled.API.Features;
 using Exiled.CustomItems.API.Features;
+using RemoteAdmin;
+using CommandSystem.Commands;
+using CommandSystem;
 
 namespace AdvancedMERTools
 {
@@ -37,7 +40,7 @@ namespace AdvancedMERTools
             float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
             Health -= damage;
             Hitmarker.SendHitmarker(ev.Player.ReferenceHub, 1f);
-            CheckDead(ev.Player);
+            CheckDead(ev.Player, damage);
         }
 
         public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
@@ -51,11 +54,11 @@ namespace AdvancedMERTools
                 damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
                 if (ev.Player != null) Hitmarker.SendHitmarker(ev.Player.ReferenceHub, 1f);
                 Health -= damage;
-                CheckDead(ev.Player);
+                CheckDead(ev.Player, damage);
             }
         }
 
-        public void CheckDead(Player player)
+        public void CheckDead(Player player, float damage)
         {
             if (Health <= 0)
             {
@@ -165,6 +168,29 @@ namespace AdvancedMERTools
                                 }
                             }
                             break;
+                        case DeadType.SendCommand:
+                            if (Base.commandings.Count == 0)
+                            {
+                                return;
+                            }
+                            Chance = 0;
+                            Base.commandings.ForEach(x => Chance += x.Chance);
+                            Chance = UnityEngine.Random.Range(0f, Chance);
+                            foreach (Commanding commanding in Base.commandings)
+                            {
+                                if (commanding.ForceExecute && commanding.CommandContext != "")
+                                {
+                                    ExecuteCommand(commanding, player, damage);
+                                    continue;
+                                }
+                                if (Chance <= 0) continue;
+                                Chance -= commanding.Chance;
+                                if (Chance <= 0 && commanding.CommandContext != "")
+                                {
+                                    ExecuteCommand(commanding, player, damage);
+                                }
+                            }
+                            break;
                     }
                 });
             }
@@ -186,6 +212,29 @@ namespace AdvancedMERTools
                 {
                     Item.Create(item.ItemType).CreatePickup(this.transform.position);
                 }
+            }
+        }
+
+        void ExecuteCommand(Commanding commanding, Player player, float damage)
+        {
+            string command = commanding.CommandContext;
+            command.Replace("{attacker_i}", player.Id.ToString());
+            command.Replace("{attacker_name}", player.Nickname);
+            Vector3 vector3 = player.Position;
+            command.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+            command.Replace("{a_room}", player.CurrentRoom.RoomName.ToString());
+            command.Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
+            command.Replace("{a_role}", player.Role.Type.ToString());
+            vector3 = this.transform.position;
+            command.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+            command.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString());
+            command.Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
+            command.Replace("{a_item}", player.CurrentItem.Type.ToString());
+            command.Replace("{damage}", damage.ToString());
+            string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
+            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1))
+            {
+                command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
             }
         }
 
