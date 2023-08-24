@@ -32,8 +32,6 @@ public class HealthObject : MonoBehaviour
     public float ResetHPTo = 0f;
     [ReorderableList]
     public List<WhitelistWeapon> whitelistWeapons = new List<WhitelistWeapon> { };
-    [BoxGroup("DynamicDisappear")] [ShowIf("DeadType", DeadType.DynamicDisappearing)]
-    public AnimationCurve DeathScaleDownAnimationCurve = new AnimationCurve();
     [BoxGroup("Message")]
     [ShowIf("DeadType", DeadType.SendMessage)]
     public MessageType MessageType = MessageType.BroadCast;
@@ -85,7 +83,6 @@ public class HealthObjectDTO
     public AnimationType AnimationType;
     public List<WhitelistWeapon> whitelistWeapons;
     public WarheadActionType warheadActionType;
-    public AnimationCurve AnimationCurve;
     public string MessageContent;
     public MessageType MessageType;
     public SendType SendType;
@@ -216,9 +213,6 @@ public class HealthObjectCompiler : MonoBehaviour
                     break;
                 case DeadType.ResetHP:
                     dTO.ResetHPTo = health.ResetHPTo;
-                    break;
-                case DeadType.DynamicDisappearing:
-                    dTO.AnimationCurve = health.DeathScaleDownAnimationCurve;
                     break;
                 case DeadType.DropItems:
                     dTO.dropItems = health.DropItems;
