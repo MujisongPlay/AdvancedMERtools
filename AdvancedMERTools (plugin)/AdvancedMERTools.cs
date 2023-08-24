@@ -265,23 +265,6 @@ namespace AdvancedMERTools
                     }
                 }
             }
-            /*path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-DoorInstalling.json");
-            if (File.Exists(path))
-            {
-                List<HealthObjectDTO> healthObjectDTOs = JsonSerializer.Deserialize<List<HealthObjectDTO>>(File.ReadAllText(path));
-                foreach (HealthObjectDTO dTO in healthObjectDTOs)
-                {
-                    Transform target = ev.Schematic.transform;
-                    if (dTO.ObjectId != "")
-                    {
-                        for (int i = dTO.ObjectId.Length - 1; i > -1; i--)
-                        {
-                            target = target.GetChild(int.Parse(dTO.ObjectId[i].ToString()));
-                        }
-                    }
-                    target.gameObject.AddComponent<HealthObject>().Base = dTO;
-                }
-            }*/
         }
 
         public void OnGen()
