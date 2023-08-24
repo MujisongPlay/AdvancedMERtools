@@ -242,26 +242,26 @@ namespace AdvancedMERTools
         {
             if (Health <= 0 && this.Base.DeadType == DeadType.DynamicDisappearing && !AnimationEnded)
             {
-                if (Base.AnimationCurve != null)
-                {
-                    if (Base.AnimationCurve.length < animationkey)
-                    {
-                        Destroy();
-                    }
-                    else
-                    {
-                        this.transform.localScale = Vector3.one * Base.AnimationCurve.Evaluate(animationkey);
-                    }
-                }
-                else
-                {
+                //if (Base.AnimationCurve != null)
+                //{
+                //    if (Base.AnimationCurve.keys.Last().time < animationkey)
+                //    {
+                //        Destroy();
+                //    }
+                //    else
+                //    {
+                //        this.transform.localScale = Vector3.one * Base.AnimationCurve.Evaluate(animationkey);
+                //    }
+                //}
+                //else
+                //{
                     this.transform.localScale = Vector3.Lerp(this.transform.localScale, Vector3.zero, Time.deltaTime);
                     if (this.transform.localScale.magnitude <= 0.1f)
                     {
                         Destroy();
                     }
-                }
-                animationkey += Time.deltaTime;
+                //}
+                //animationkey += Time.deltaTime;
             }
         }
 
@@ -275,7 +275,7 @@ namespace AdvancedMERTools
 
         bool AnimationEnded = false;
 
-        float animationkey = 0;
+        //float animationkey = 0;
 
         public float Health;
 
