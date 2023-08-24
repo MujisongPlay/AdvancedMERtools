@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -7,6 +7,7 @@ using System.IO;
 using System;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Globalization;
 
 public class CustomRGBA : MonoBehaviour
 {
@@ -104,7 +105,7 @@ public class CustomRGBA : MonoBehaviour
                 //};
                 if (data.Properties.ContainsKey("Color"))
                 {
-                    data.Properties["Color"] = string.Format("{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A);
+                    data.Properties["Color"] = string.Format(CultureInfo.InvariantCulture, "{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A);
                 }
                 //list.Blocks.Remove(data);
                 //list.Blocks.Add(blockData);
