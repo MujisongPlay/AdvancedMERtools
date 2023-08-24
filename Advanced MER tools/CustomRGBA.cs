@@ -105,7 +105,7 @@ public class CustomRGBA : MonoBehaviour
                 //};
                 if (data.Properties.ContainsKey("Color"))
                 {
-                    data.Properties["Color"] = string.Format(CultureInfo.InvariantCulture, "{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A);
+                    data.Properties["Color"] = string.Format(CultureInfo.InvariantCulture, "{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A.ToString());
                 }
                 //list.Blocks.Remove(data);
                 //list.Blocks.Add(blockData);
