@@ -240,7 +240,6 @@ public class HealthObjectCompiler : MonoBehaviour
         string path = "";
         while (true)
         {
-            if (transform.parent == null) break;
             for (int i = 0; i < transform.parent.childCount; i++)
             {
                 if (transform.parent.GetChild(i) == transform)
@@ -249,6 +248,7 @@ public class HealthObjectCompiler : MonoBehaviour
                 }
             }
             transform = transform.parent;
+            if (transform.TryGetComponent<Schematic>(out _)) break;
         }
         return path;
     }
