@@ -89,26 +89,13 @@ public class CustomRGBA : MonoBehaviour
                 SchematicBlockData data = list.Blocks.Find(x => x.ObjectId == primitive.transform.GetInstanceID());
                 if (data == null)
                 {
+                    Debug.Log("Unregistered item found! " + primitive.gameObject.name);
                     continue;
                 }
-                //SchematicBlockData blockData = new SchematicBlockData
-                //{
-                //    AnimatorName = data.AnimatorName,
-                //    BlockType = data.BlockType,
-                //    Name = data.Name,
-                //    ObjectId = data.ObjectId,
-                //    ParentId = data.ParentId,
-                //    Position = data.Position,
-                //    Rotation = data.Rotation,
-                //    Scale = data.Scale,
-                //    Properties = data.Properties
-                //};
                 if (data.Properties.ContainsKey("Color"))
                 {
-                    data.Properties["Color"] = string.Format(CultureInfo.InvariantCulture, "{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A.ToString());
+                    data.Properties["Color"] = string.Format("{0}:{1}:{2}:{3}", custom.R, custom.G, custom.B, custom.A.ToString(CultureInfo.InvariantCulture));
                 }
-                //list.Blocks.Remove(data);
-                //list.Blocks.Add(blockData);
             }
         }
         SchematicObjectDataList list1 = new SchematicObjectDataList
