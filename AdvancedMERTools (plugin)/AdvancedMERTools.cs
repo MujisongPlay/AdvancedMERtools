@@ -16,6 +16,10 @@ using Utf8Json;
 using MapEditorReborn.API.Features.Objects;
 using Exiled.Events.Extensions;
 using Exiled.Events;
+using PlayerRoles;
+using MapEditorReborn.API;
+using MapEditorReborn.API.Enums;
+using MapEditorReborn.API.Features.Serializable;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -54,6 +58,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Map.ExplodingGrenade += manager.OnGrenade;
             Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
+            Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
         }
 
         void UnRegister()
@@ -66,6 +71,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Map.ExplodingGrenade -= manager.OnGrenade;
             Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
+            Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
         }
     }
 
@@ -78,111 +84,6 @@ namespace AdvancedMERTools
             EventHandler.HealthObjectDead.InvokeSafely(ev);
         }
     }
-
-    [Serializable]
-    public class HealthObjectDTO
-    {
-        public float Health;
-        public int ArmorEfficient;
-        public DeadType DeadType;
-        public float DeadDelay;
-        public float ResetHPTo;
-        public string ObjectId;
-        public string Animator;
-        public string AnimationName;
-        public AnimationType AnimationType;
-        public List<WhitelistWeapon> whitelistWeapons;
-        public WarheadActionType warheadActionType;
-        public AnimationCurve AnimationCurve;
-        public string MessageContent;
-        public MessageType MessageType;
-        public SendType SendType;
-        public List<DropItem> dropItems;
-        public bool DoNotDestroyAfterDeath;
-        public List<Commanding> commandings;
-    }
-
-    [Serializable]
-    public enum DeadType
-    {
-        Disappear,
-        GetRigidbody,
-        DynamicDisappearing,
-        Explode,
-        ResetHP,
-        PlayAnimation,
-        Warhead,
-        SendMessage,
-        DropItems,
-        SendCommand
-    }
-
-    [Serializable]
-    public enum AnimationType
-    {
-        Start,
-        Stop
-    }
-
-    [Serializable]
-    public enum WarheadActionType
-    {
-        Start,
-        Stop,
-        Lock,
-        UnLock,
-        Disable,
-        Enable
-    }
-
-    [Serializable]
-    public enum MessageType
-    {
-        Cassie,
-        BroadCast,
-        Hint
-    }
-
-    [Serializable]
-    public enum SendType
-    {
-        Killer,
-        All
-    }
-
-    [Serializable]
-    public class DropItem
-    {
-        public ItemType ItemType;
-        public uint CustomItemId;
-        public int Count;
-        public float Chance;
-        public bool ForceSpawn;
-    }
-
-    [Serializable]
-    public class WhitelistWeapon
-    {
-        public ItemType ItemType;
-        public uint CustomItemId;
-    }
-
-    [Serializable]
-    public class Commanding
-    {
-        public string CommandContext;
-        public float Chance;
-        public bool ForceExecute;
-    }
-
-    //[Serializable]
-    //public class DoorInstallingGuideDTO
-    //{
-    //    public float Health;
-    //    public DoorDamageType DamagableDamageType;
-    //    public KeycardPermissions KeycardPermissions;
-    //    public string ObjectId;
-    //}
 
     public class EventManager
     {
@@ -238,26 +139,12 @@ namespace AdvancedMERTools
                 List<HealthObjectDTO> healthObjectDTOs = JsonSerializer.Deserialize<List<HealthObjectDTO>>(File.ReadAllText(path));
                 foreach (HealthObjectDTO dTO in healthObjectDTOs)
                 {
-                    Transform target = ev.Schematic.transform;
-                    if (dTO.ObjectId != "")
-                    {
-                        for (int i = dTO.ObjectId.Length - 1; i > -1; i--)
-                        {
-                            target = target.GetChild(int.Parse(dTO.ObjectId[i].ToString()));
-                        }
-                    }
+                    Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
                     HealthObject health = target.gameObject.AddComponent<HealthObject>();
                     health.Base = dTO;
                     if (dTO.DeadType == DeadType.PlayAnimation)
                     {
-                        target = ev.Schematic.transform;
-                        if (dTO.Animator != "")
-                        {
-                            for (int i = dTO.Animator.Length - 1; i > -1; i--)
-                            {
-                                target = target.GetChild(int.Parse(dTO.Animator[i].ToString()));
-                            }
-                        }
+                        target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
                         if (target.TryGetComponent<Animator>(out Animator animator))
                         {
                             health.animator = animator;
@@ -265,6 +152,23 @@ namespace AdvancedMERTools
                     }
                 }
             }
+        }
+
+        public static Transform FindObjectWithPath(Transform target, string path)
+        {
+            if (path != "")
+            {
+                for (int i = path.Length - 1; i > -1; i--)
+                {
+                    if (target.childCount == 0 || target.childCount <= int.Parse(path[i].ToString()))
+                    {
+                        ServerLogs.AddLog(ServerLogs.Modules.Logger, "Advanced MER tools: Could not find appropriate child!", ServerLogs.ServerLogType.RemoteAdminActivity_Misc);
+                        break;
+                    }
+                    target = target.GetChild(int.Parse(path[i].ToString()));
+                }
+            }
+            return target;
         }
 
         public void OnGen()
@@ -351,17 +255,41 @@ namespace AdvancedMERTools
                 }
             });
         }
-    }
 
-    public class HealthObjectDeadEventArgs : EventArgs, Exiled.Events.EventArgs.Interfaces.IExiledEvent
-    {
-        public HealthObjectDeadEventArgs(HealthObjectDTO healthObject, Player Attacker)
+        public void ApplyCustomSpawnPoint(Exiled.Events.EventArgs.Player.SpawnedEventArgs ev)
         {
-            HealthObject = healthObject;
-            Killer = Attacker;
+            if (API.CurrentLoadedMap == null)
+            {
+                return;
+            }
+            List<PlayerSpawnPointSerializable> list = API.CurrentLoadedMap.PlayerSpawnPoints.FindAll(x => keyValuePairs.TryGetValue(ev.Player.RoleManager.CurrentRole.RoleTypeId, out SpawnableTeam team) ? x.SpawnableTeam == team : false);
+            if (list.Count != 0)
+            {
+                PlayerSpawnPointSerializable serializable = list.RandomItem();
+                ev.Player.Teleport(API.GetRelativePosition(serializable.Position, API.GetRandomRoom(serializable.RoomType)));
+            }
         }
 
-        public HealthObjectDTO HealthObject;
-        public Player Killer;
+        public static Dictionary<RoleTypeId, SpawnableTeam> keyValuePairs = new Dictionary<RoleTypeId, SpawnableTeam>
+        {
+            { RoleTypeId.ChaosConscript, SpawnableTeam.Chaos },
+            { RoleTypeId.ChaosMarauder, SpawnableTeam.Chaos },
+            { RoleTypeId.ChaosRepressor, SpawnableTeam.Chaos },
+            { RoleTypeId.ChaosRifleman, SpawnableTeam.Chaos },
+            { RoleTypeId.ClassD, SpawnableTeam.ClassD },
+            { RoleTypeId.FacilityGuard, SpawnableTeam.FacilityGuard },
+            { RoleTypeId.NtfCaptain, SpawnableTeam.MTF },
+            { RoleTypeId.NtfPrivate, SpawnableTeam.MTF },
+            { RoleTypeId.NtfSergeant, SpawnableTeam.MTF },
+            { RoleTypeId.NtfSpecialist, SpawnableTeam.MTF },
+            { RoleTypeId.Scientist, SpawnableTeam.Scientist },
+            { RoleTypeId.Scp049, SpawnableTeam.Scp049 },
+            { RoleTypeId.Scp0492, SpawnableTeam.Scp0492 },
+            { RoleTypeId.Scp096, SpawnableTeam.Scp096 },
+            { RoleTypeId.Scp106, SpawnableTeam.Scp106 },
+            { RoleTypeId.Scp173, SpawnableTeam.Scp173 },
+            { RoleTypeId.Scp939, SpawnableTeam.Scp939 },
+            { RoleTypeId.Tutorial, SpawnableTeam.Tutorial }
+        };
     }
 }
