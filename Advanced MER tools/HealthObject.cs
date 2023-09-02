@@ -238,6 +238,10 @@ public class HealthObjectCompiler : MonoBehaviour
     public static string FindPath(Transform transform)
     {
         string path = "";
+        if (transform.TryGetComponent<Schematic>(out _))
+        {
+            return path;
+        }
         while (true)
         {
             for (int i = 0; i < transform.parent.childCount; i++)
