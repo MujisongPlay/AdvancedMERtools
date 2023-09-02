@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +8,7 @@ using UnityEngine;
 using Exiled.API.Features;
 using MapEditorReborn.API.Features.Serializable;
 using MapEditorReborn.API.Features.Objects;
+using Exiled.API.Features.Doors;
 using Exiled.Events.Handlers;
 using Exiled.Events.EventArgs.Player;
 
@@ -59,7 +60,7 @@ namespace AdvancedMERTools
         void Update()
         {
             if (RealDoor == null) return;
-            if (RealDoor.IsBroken)
+            if ((RealDoor as BreakableDoor).IsDestroyed)
             {
                 Exiled.Events.Handlers.Player.InteractingDoor -= OnInteractDoor;
                 Destroy(this.gameObject);
