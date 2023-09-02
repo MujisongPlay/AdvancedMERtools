@@ -14,12 +14,13 @@ using Interactables.Interobjects.DoorUtils;
 using System.IO;
 using Utf8Json;
 using MapEditorReborn.API.Features.Objects;
-using Exiled.Events.Extensions;
+using Exiled.Events.Features;
 using Exiled.Events;
 using PlayerRoles;
 using MapEditorReborn.API;
 using MapEditorReborn.API.Enums;
 using MapEditorReborn.API.Features.Serializable;
+using Exiled.API.Features.Doors;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -77,7 +78,7 @@ namespace AdvancedMERTools
 
     public static class EventHandler
     {
-        public static event Events.CustomEventHandler<HealthObjectDeadEventArgs> HealthObjectDead;
+        public static Event<HealthObjectDeadEventArgs> HealthObjectDead { get; set; } = new Event<HealthObjectDeadEventArgs>();
 
         internal static void OnHealthObjectDead(HealthObjectDeadEventArgs ev)
         {
@@ -243,7 +244,7 @@ namespace AdvancedMERTools
                 {
                     foreach (DoorLinkingRooms door in GameObject.FindObjectsOfType<DoorLinkingRooms>())
                     {
-                        if (door.gameObject.TryGetComponent<BasicDoor>(out BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
+                        if (door.gameObject.TryGetComponent<Interactables.Interobjects.BasicDoor>(out Interactables.Interobjects.BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
                         {
                             string str = "DoorLCZ";
                             if (door.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
