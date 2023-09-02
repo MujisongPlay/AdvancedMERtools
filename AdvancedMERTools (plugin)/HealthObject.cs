@@ -135,13 +135,13 @@ namespace AdvancedMERTools
                             switch (Base.MessageType)
                             {
                                 case MessageType.Cassie:
-                                    Cassie.Message(Base.MessageContent, false, true, true);
+                                    Cassie.Message(ApplyFormat(Base.MessageContent, player, damage), false, true, true);
                                     break;
                                 case MessageType.BroadCast:
-                                    players.ForEach(x => x.Broadcast(3, Base.MessageContent));
+                                    players.ForEach(x => x.Broadcast(3, ApplyFormat(Base.MessageContent, player, damage)));
                                     break;
                                 case MessageType.Hint:
-                                    players.ForEach(x => x.ShowHint(Base.MessageContent));
+                                    players.ForEach(x => x.ShowHint(ApplyFormat(Base.MessageContent, player, damage)));
                                     break;
                             }
                             break;
@@ -217,25 +217,30 @@ namespace AdvancedMERTools
 
         void ExecuteCommand(Commanding commanding, Player player, float damage)
         {
-            string command = commanding.CommandContext;
-            command.Replace("{attacker_i}", player.Id.ToString());
-            command.Replace("{attacker_name}", player.Nickname);
-            Vector3 vector3 = player.Position;
-            command.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-            command.Replace("{a_room}", player.CurrentRoom.RoomName.ToString());
-            command.Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
-            command.Replace("{a_role}", player.Role.Type.ToString());
-            vector3 = this.transform.position;
-            command.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-            command.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString());
-            command.Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
-            command.Replace("{a_item}", player.CurrentItem.Type.ToString());
-            command.Replace("{damage}", damage.ToString());
+            string command = ApplyFormat(commanding.CommandContext, player, damage);
             string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
             if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1))
             {
                 command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
             }
+        }
+
+        string ApplyFormat(string context, Player player, float damage)
+        {
+            context.Replace("{attacker_i}", player.Id.ToString());
+            context.Replace("{attacker_name}", player.Nickname);
+            Vector3 vector3 = player.Position;
+            context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+            context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString());
+            context.Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
+            context.Replace("{a_role}", player.Role.Type.ToString());
+            vector3 = this.transform.position;
+            context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+            context.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString());
+            context.Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
+            context.Replace("{a_item}", player.CurrentItem.Type.ToString());
+            context.Replace("{damage}", damage.ToString());
+            return context;
         }
 
         void Update()
