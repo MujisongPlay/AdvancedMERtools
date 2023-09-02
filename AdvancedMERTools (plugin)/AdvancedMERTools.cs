@@ -263,6 +263,10 @@ namespace AdvancedMERTools
             {
                 return;
             }
+            if (!config.CustomSpawnPointEnable)
+            {
+                return;
+            }
             List<PlayerSpawnPointSerializable> list = API.CurrentLoadedMap.PlayerSpawnPoints.FindAll(x => keyValuePairs.TryGetValue(ev.Player.RoleManager.CurrentRole.RoleTypeId, out SpawnableTeam team) ? x.SpawnableTeam == team : false);
             if (list.Count != 0)
             {
