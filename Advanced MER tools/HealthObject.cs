@@ -37,6 +37,7 @@ public class HealthObject : MonoBehaviour
     public MessageType MessageType = MessageType.BroadCast;
     [BoxGroup("Message")]
     [ShowIf("DeadType", DeadType.SendMessage)]
+    [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
     public string MessageContent = "";
     [BoxGroup("Message")]
     [ShowIf("MessageShowCheck")]
