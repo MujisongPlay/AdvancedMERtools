@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,6 +26,48 @@ namespace AdvancedMERTools
         public List<DropItem> dropItems;
         public bool DoNotDestroyAfterDeath;
         public List<Commanding> commandings;
+    }
+
+    [Serializable]
+    public class IPDTO
+    {
+        public ActionType ActionType;
+        public string ObjectId;
+        public string Animator;
+        public string AnimationName;
+        public AnimationType AnimationType;
+        public WarheadActionType warheadActionType;
+        public string MessageContent;
+        public MessageType MessageType;
+        public SendType SendType;
+        public List<DropItem> dropItems;
+        public List<Commanding> commandings;
+        public Scp914Mode Scp914Mode;
+    }
+
+    [Flags]
+    [Serializable]
+    public enum Scp914Mode
+    {
+        Rough = 0,
+        Coarse = 1,
+        OneToOne = 2,
+        Fine = 3,
+        VeryFine = 4
+    }
+
+    [Flags]
+    [Serializable]
+    public enum ActionType
+    {
+        Disappear = 1,
+        Explode = 2,
+        PlayAnimation = 4,
+        Warhead = 8,
+        SendMessage = 16,
+        DropItems = 32,
+        SendCommand = 64,
+        UpgradeItem = 128
     }
 
     [Serializable]
