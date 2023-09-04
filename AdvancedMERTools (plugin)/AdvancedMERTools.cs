@@ -34,6 +34,8 @@ namespace AdvancedMERTools
 
         public List<HealthObject> healthObjects = new List<HealthObject> { };
 
+        public List<InteractablePickup> InteractablePickups = new List<InteractablePickup> { };
+
         public override void OnEnabled()
         {
             Singleton = this;
@@ -60,6 +62,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
+            Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
         }
 
         void UnRegister()
@@ -73,6 +76,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
+            Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
         }
     }
 
@@ -98,6 +102,11 @@ namespace AdvancedMERTools
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
             AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
+        }
+
+        public void OnItemPicked(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
+        {
+            AdvancedMERTools.Singleton.InteractablePickups.ForEach(x => x.OnInteracted(ev));
         }
 
         public void OnLoadMap(MapEditorReborn.Events.EventArgs.LoadingMapEventArgs ev)
@@ -144,6 +153,25 @@ namespace AdvancedMERTools
                     HealthObject health = target.gameObject.AddComponent<HealthObject>();
                     health.Base = dTO;
                     if (dTO.DeadType == DeadType.PlayAnimation)
+                    {
+                        target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
+                        if (target.TryGetComponent<Animator>(out Animator animator))
+                        {
+                            health.animator = animator;
+                        }
+                    }
+                }
+            }
+            path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-Pickups.json");
+            if (File.Exists(path))
+            {
+                List<IPDTO> healthObjectDTOs = JsonSerializer.Deserialize<List<IPDTO>>(File.ReadAllText(path));
+                foreach (IPDTO dTO in healthObjectDTOs)
+                {
+                    Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
+                    InteractablePickup health = target.gameObject.AddComponent<InteractablePickup>();
+                    health.Base = dTO;
+                    if (dTO.ActionType == ActionType.PlayAnimation)
                     {
                         target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
                         if (target.TryGetComponent<Animator>(out Animator animator))
