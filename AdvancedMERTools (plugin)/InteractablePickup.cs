@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,11 +23,6 @@ namespace AdvancedMERTools
         {
             AdvancedMERTools.Singleton.InteractablePickups.Add(this);
             itemSpawn = this.gameObject.GetComponent<ItemSpawnPointObject>();
-            Pickups.AddRange(itemSpawn.AttachedPickups);
-            if (Pickups.Count == 0)
-            {
-                Destroy();
-            }
         }
 
         public void Destroy()
@@ -38,7 +33,9 @@ namespace AdvancedMERTools
 
         public void OnInteracted(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
         {
-            if (!Pickups.Contains(ev.Pickup))
+            Pickups.Clear();
+            Pickups.AddRange(itemSpawn.AttachedPickups);
+            if (Pickups.Count == 0 || !Pickups.Contains(ev.Pickup))
             {
                 return;
             }
