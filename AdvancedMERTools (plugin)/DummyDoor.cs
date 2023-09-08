@@ -51,7 +51,7 @@ namespace AdvancedMERTools
 
         public void OnInteractDoor(InteractingDoorEventArgs ev)
         {
-            if (this.RealDoor == null)
+            if (this.RealDoor == null || animator == null)
                 return;
             if (ev.Door == RealDoor && ev.IsAllowed)
             {
