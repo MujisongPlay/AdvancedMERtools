@@ -51,7 +51,9 @@ namespace AdvancedMERTools
 
         public void OnInteractDoor(InteractingDoorEventArgs ev)
         {
-            if (ev.Door.Base.transform == this.transform.parent && ev.IsAllowed)
+            if (this.RealDoor == null)
+                return;
+            if (ev.Door == RealDoor && ev.IsAllowed)
             {
                 animator.Play(ev.Door.IsOpen ? "DoorClose" : "DoorOpen");
             }
@@ -63,7 +65,7 @@ namespace AdvancedMERTools
             if ((RealDoor as BreakableDoor).IsDestroyed)
             {
                 Exiled.Events.Handlers.Player.InteractingDoor -= OnInteractDoor;
-                Destroy(this.gameObject);
+                Destroy(this.gameObject, 0.5f);
             }
         }
     }
