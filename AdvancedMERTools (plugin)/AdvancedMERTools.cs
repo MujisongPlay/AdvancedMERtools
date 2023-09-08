@@ -109,6 +109,14 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.InteractablePickups.ForEach(x => x.OnInteracted(ev));
         }
 
+        //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
+        //{
+        //    if (ev.IsAllowed && )
+        //    {
+
+        //    }
+        //}
+
         public void OnLoadMap(MapEditorReborn.Events.EventArgs.LoadingMapEventArgs ev)
         {
             if (!ev.IsAllowed) return;
@@ -272,7 +280,7 @@ namespace AdvancedMERTools
                 {
                     foreach (DoorLinkingRooms door in GameObject.FindObjectsOfType<DoorLinkingRooms>())
                     {
-                        if (door.gameObject.TryGetComponent<Interactables.Interobjects.BasicDoor>(out Interactables.Interobjects.BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
+                        if (door.gameObject.TryGetComponent(out Interactables.Interobjects.BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
                         {
                             string str = "DoorLCZ";
                             if (door.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
