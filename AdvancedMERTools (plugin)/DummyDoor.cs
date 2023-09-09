@@ -21,7 +21,7 @@ namespace AdvancedMERTools
 
         public Animator animator;
 
-        static Config config = AdvancedMERTools.Singleton.Config;
+        static readonly Config config = AdvancedMERTools.Singleton.Config;
 
         void Start()
         {
@@ -36,6 +36,23 @@ namespace AdvancedMERTools
                         {
                             RealDoor = Door.Door;
                             break;
+                        }
+                    }
+                    if (RealDoor == null)
+                    {
+                        float distance = float.MaxValue;
+                        foreach (Door Door in Door.List)
+                        {
+                            if (distance > Vector3.Distance(Door.Position, this.transform.position))
+                            {
+                                distance = Vector3.Distance(Door.Position, transform.position);
+                                RealDoor = Door;
+                            }
+                        }
+                        if (RealDoor == null)
+                        {
+                            ServerConsole.AddLog("Failed to find proper door!", ConsoleColor.Red);
+                            Destroy(this.gameObject);
                         }
                     }
                 }
