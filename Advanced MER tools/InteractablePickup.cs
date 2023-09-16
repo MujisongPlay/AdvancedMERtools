@@ -1,173 +1,108 @@
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
 using System.Collections;
 using System.ComponentModel;
-using System.IO;
-using UnityEditor;
+using System.Collections.Generic;
 using UnityEngine;
 using NaughtyAttributes;
+using System;
+using System.IO;
+using UnityEditor;
+using Newtonsoft.Json;
 
-
-public class HealthObject : MonoBehaviour
+public class InteractablePickup : MonoBehaviour
 {
-    public float Health = 0;
-    public int ArmorEfficient = 0;
-    public DeadType DeadType = DeadType.Disappear;
-    public float DeadActionDelay = 0f;
-    [BoxGroup("Explode")]
-    [ShowIf("DeadType", DeadType.Explode)]
-    public bool ExplosionFriendlyKill = false;
-    [ShowIf("KillCheck")]
-    public bool DoNotRemoveAfterDeath = false;
-    [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
-    public GameObject Animator = null;
-    [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
-    public string AnimationName = "";
+    public ActionType ActionType;
     [BoxGroup("Animation")]
-    [ShowIf("DeadType", DeadType.PlayAnimation)]
+    [ShowIf("ActionType", ActionType.PlayAnimation)]
+    public GameObject Animator = null;
+    [BoxGroup("Animation")]
+    [ShowIf("ActionType", ActionType.PlayAnimation)]
+    public string AnimationName = "";
+    [BoxGroup("Explode")]
+    [ShowIf("ActionType", ActionType.Explode)]
+    public bool ExplosionFriendlyKill = false;
+    [BoxGroup("Animation")]
+    [ShowIf("ActionType", ActionType.PlayAnimation)]
     public AnimationType AnimationType = AnimationType.Start;
     [BoxGroup("Warhead")]
-    [ShowIf("DeadType", DeadType.Warhead)]
+    [ShowIf("ActionType", ActionType.Warhead)]
     public WarheadActionType warheadAction = WarheadActionType.Start;
-    [BoxGroup("ResetHP")]
-    [ShowIf("DeadType", DeadType.ResetHP)]
-    public float ResetHPTo = 0f;
-    [ReorderableList]
-    public List<WhitelistWeapon> whitelistWeapons = new List<WhitelistWeapon> { };
     [BoxGroup("Message")]
-    [ShowIf("DeadType", DeadType.SendMessage)]
+    [ShowIf("ActionType", ActionType.SendMessage)]
     public MessageType MessageType = MessageType.BroadCast;
     [BoxGroup("Message")]
-    [ShowIf("DeadType", DeadType.SendMessage)]
-    [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
+    [ShowIf("ActionType", ActionType.SendMessage)]
+    [Tooltip("{picker_i} = picker's player id.\n{picker_name}\n{a_pos} = picker's position.\n{a_room} = picker's room\n{a_zone} = picker's zone\n{a_role} = picker's role\n{s_pos} = item's exact position.\n{s_room} = item's exact room.\n{s_zone} = item's zone.\n{a_item} = picker's current item.")]
     public string MessageContent = "";
     [BoxGroup("Message")]
     [ShowIf("MessageShowCheck")]
     public SendType SendType = SendType.Killer;
     [BoxGroup("Drop items")]
-    [ShowIf("DeadType", DeadType.DropItems)]
+    [ShowIf("ActionType", ActionType.DropItems)]
     [ReorderableList]
     public List<DropItem> DropItems = new List<DropItem> { };
     [BoxGroup("Command")]
-    [ShowIf("DeadType", DeadType.SendCommand)]
+    [ShowIf("ActionType", ActionType.SendCommand)]
     [ReorderableList]
     [Label("There's many formats you can see when you put on curser to 'command context'")]
     public List<Commanding> Commandings = new List<Commanding> { };
-
-    public bool KillCheck()
-    {
-        return DeadType == DeadType.Disappear || DeadType == DeadType.Explode || DeadType == DeadType.DynamicDisappearing || DeadType == DeadType.SendCommand;
-    }
+    [BoxGroup("914Upgrade")]
+    [ShowIf("ActionType", ActionType.UpgradeItem)]
+    public Scp914Mode Setting;
 
     public bool MessageShowCheck()
     {
-        return DeadType == DeadType.SendMessage && MessageType != MessageType.Cassie;
+        return ActionType.HasFlag(ActionType.SendMessage) && MessageType != MessageType.Cassie;
     }
 }
 
 [Serializable]
-public class WhitelistWeapon
+public class IPDTO
 {
-    public ItemType ItemType;
-    public uint CustomItemId;
-}
-
-[Serializable]
-public class HealthObjectDTO
-{
-    public float Health;
-    public int ArmorEfficient;
-    public DeadType DeadType;
-    public float DeadDelay;
-    public float ResetHPTo;
+    public ActionType ActionType;
     public string ObjectId;
     public string Animator;
     public string AnimationName;
     public AnimationType AnimationType;
-    public List<WhitelistWeapon> whitelistWeapons;
     public WarheadActionType warheadActionType;
     public string MessageContent;
     public MessageType MessageType;
     public SendType SendType;
     public List<DropItem> dropItems;
-    public bool DoNotDestroyAfterDeath;
     public List<Commanding> commandings;
+    public Scp914Mode Scp914Mode;
     public bool FFon;
 }
 
+[Flags]
 [Serializable]
-public enum DeadType
+public enum Scp914Mode
 {
-    Disappear,
-    GetRigidbody,
-    DynamicDisappearing,
-    Explode,
-    ResetHP,
-    PlayAnimation,
-    Warhead,
-    SendMessage,
-    DropItems,
-    SendCommand
+    Rough = 0,
+    Coarse = 1,
+    OneToOne = 2,
+    Fine = 3,
+    VeryFine = 4
 }
 
+[Flags]
 [Serializable]
-public enum WarheadActionType
+public enum ActionType
 {
-    Start,
-    Stop,
-    Lock,
-    UnLock,
-    Disable,
-    Enable
+    Disappear = 1,
+    Explode = 2,
+    PlayAnimation = 4,
+    Warhead = 8,
+    SendMessage = 16,
+    DropItems = 32,
+    SendCommand = 64,
+    UpgradeItem = 128
 }
 
-[Serializable]
-public enum AnimationType
-{
-    Start,
-    Stop
-}
-
-[Serializable]
-public enum MessageType
-{
-    Cassie,
-    BroadCast,
-    Hint
-}
-
-[Serializable]
-public enum SendType
-{
-    Killer,
-    All
-}
-
-[Serializable]
-public class DropItem
-{
-    public ItemType ItemType;
-    public uint CustomItemId;
-    public int Count;
-    public float Chance;
-    public bool ForceSpawn;
-}
-
-[Serializable]
-public class Commanding
-{
-    [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
-    public string CommandContext;
-    public float Chance;
-    public bool ForceExecute;
-}
-
-public class HealthObjectCompiler : MonoBehaviour
+public class InteractablePickupCompiler
 {
     private static readonly Config Config = SchematicManager.Config;
 
-    [MenuItem("SchematicManager/Compile Health Schematics", priority = -11)]
+    [MenuItem("SchematicManager/Compile Interactable pickups", priority = -11)]
     public static void OnCompile()
     {
         foreach (Schematic schematic in GameObject.FindObjectsOfType<Schematic>())
@@ -192,55 +127,65 @@ public class HealthObjectCompiler : MonoBehaviour
 
         Directory.CreateDirectory(schematicDirectoryPath);
 
-        List<HealthObjectDTO> healthObjects = new List<HealthObjectDTO> { };
+        List<IPDTO> interactables = new List<IPDTO> { };
 
-        foreach (HealthObject health in schematic.transform.GetComponentsInChildren<HealthObject>())
+        foreach (InteractablePickup ip in schematic.transform.GetComponentsInChildren<InteractablePickup>())
         {
-            HealthObjectDTO dTO = new HealthObjectDTO
+            if (!ip.transform.TryGetComponent<PickupComponent>(out _) || ip.ActionType == 0)
             {
-                Health = health.Health,
-                ArmorEfficient = health.ArmorEfficient,
-                DeadType = health.DeadType,
-                ObjectId = FindPath(health.transform),
-                whitelistWeapons = health.whitelistWeapons,
-                DeadDelay = health.DeadActionDelay,
-                DoNotDestroyAfterDeath = health.DoNotRemoveAfterDeath
-            };
-            switch (health.DeadType)
-            {
-                case DeadType.Explode:
-                    dTO.FFon = health.ExplosionFriendlyKill;
-                    break;
-                case DeadType.PlayAnimation:
-                    dTO.Animator = FindPath(health.Animator.transform);
-                    dTO.AnimationName = health.AnimationName;
-                    dTO.AnimationType = health.AnimationType;
-                    break;
-                case DeadType.Warhead:
-                    dTO.warheadActionType = health.warheadAction;
-                    break;
-                case DeadType.ResetHP:
-                    dTO.ResetHPTo = health.ResetHPTo;
-                    break;
-                case DeadType.DropItems:
-                    dTO.dropItems = health.DropItems;
-                    break;
-                case DeadType.SendMessage:
-                    dTO.MessageType = health.MessageType;
-                    dTO.MessageContent = health.MessageContent;
-                    dTO.SendType = health.SendType;
-                    break;
-                case DeadType.SendCommand:
-                    dTO.commandings = health.Commandings;
-                    break;
+                continue;
             }
-            healthObjects.Add(dTO);
+            IPDTO DTO = new IPDTO
+            {
+                ObjectId = FindPath(ip.transform),
+                ActionType = ip.ActionType
+            };
+            foreach (ActionType type in Enum.GetValues(typeof(ActionType)))
+            {
+                if (ip.ActionType.HasFlag(type))
+                {
+                    switch (type)
+                    {
+                        case ActionType.Explode:
+                            DTO.FFon = ip.ExplosionFriendlyKill;
+                            break;
+                        case ActionType.DropItems:
+                            DTO.dropItems = ip.DropItems;
+                            break;
+                        case ActionType.PlayAnimation:
+                            if (ip.Animator == null)
+                                break;
+                            DTO.AnimationName = ip.AnimationName;
+                            DTO.AnimationType = ip.AnimationType;
+                            DTO.Animator = FindPath(ip.Animator.transform);
+                            break;
+                        case ActionType.Warhead:
+                            DTO.warheadActionType = ip.warheadAction;
+                            break;
+                        case ActionType.SendMessage:
+                            DTO.SendType = ip.SendType;
+                            DTO.MessageContent = ip.MessageContent;
+                            DTO.MessageType = ip.MessageType;
+                            break;
+                        case ActionType.SendCommand:
+                            DTO.commandings = ip.Commandings;
+                            break;
+                        case ActionType.UpgradeItem:
+                            DTO.Scp914Mode = ip.Setting;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            interactables.Add(DTO);
         }
 
-        string serializedData = JsonConvert.SerializeObject(healthObjects, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+        string serializedData = JsonConvert.SerializeObject(interactables, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
-        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-HealthObjects.json"), serializedData);
-        Debug.Log("Successfully Imported HealthObjects.");
+        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-Pickups.json"), serializedData);
+        Debug.Log("Successfully Imported Interactable Pickups.");
     }
 
     public static string FindPath(Transform transform)
