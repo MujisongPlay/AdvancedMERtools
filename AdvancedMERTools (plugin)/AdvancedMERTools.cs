@@ -36,6 +36,8 @@ namespace AdvancedMERTools
 
         public List<InteractablePickup> InteractablePickups = new List<InteractablePickup> { };
 
+        public List<DummyDoor> dummyDoors = new List<DummyDoor> { };
+
         public override void OnEnabled()
         {
             Singleton = this;
@@ -63,6 +65,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
         }
 
         void UnRegister()
@@ -77,6 +80,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
         }
     }
 
@@ -97,6 +101,18 @@ namespace AdvancedMERTools
         public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
         {
             ev.RaycastHit.collider.transform.GetComponentsInParent<HealthObject>().ForEach(x => x.OnShot(ev));
+        }
+
+        public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
+        {
+            AdvancedMERTools.Singleton.dummyDoors.ForEach(x => 
+            {
+                if (x != null)
+                {
+                    x.OnInteractDoor(ev);
+                }
+            });
+            AdvancedMERTools.Singleton.dummyDoors.RemoveAll(x => x == null);
         }
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
@@ -144,7 +160,9 @@ namespace AdvancedMERTools
                             break;
                     }
                     SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, ev.NewMap.Doors[i].Position, Quaternion.Euler(ev.NewMap.Doors[i].Rotation));
-                    @object.gameObject.AddComponent<DummyDoor>().door = ev.NewMap.Doors[i];
+                    DummyDoor door = @object.gameObject.AddComponent<DummyDoor>();
+                    door.door = ev.NewMap.Doors[i];
+                    AdvancedMERTools.Singleton.dummyDoors.Add(door);
                 }
             }
         }
@@ -272,7 +290,9 @@ namespace AdvancedMERTools
                                     break;
                             }
                             SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, MapEditorReborn.API.API.CurrentLoadedMap.Doors[i].Position, Quaternion.Euler(MapEditorReborn.API.API.CurrentLoadedMap.Doors[i].Rotation));
-                            @object.gameObject.AddComponent<DummyDoor>().door = MapEditorReborn.API.API.CurrentLoadedMap.Doors[i];
+                            DummyDoor door = @object.gameObject.AddComponent<DummyDoor>();
+                            door.door = MapEditorReborn.API.API.CurrentLoadedMap.Doors[i];
+                            AdvancedMERTools.Singleton.dummyDoors.Add(door);
                         }
                     }
                 }
