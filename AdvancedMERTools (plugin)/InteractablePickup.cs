@@ -50,7 +50,7 @@ namespace AdvancedMERTools
                             ev.Pickup.Destroy();
                             break;
                         case ActionType.Explode:
-                            Utils.ExplosionUtils.ServerExplode(ev.Player.ReferenceHub);
+                            Utils.ExplosionUtils.ServerExplode(ev.Pickup.Position, (Base.FFon ? Server.Host : ev.Player).Footprint);
                             break;
                         case ActionType.PlayAnimation:
                             if (animator != null)
