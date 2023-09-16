@@ -15,6 +15,9 @@ public class HealthObject : MonoBehaviour
     public int ArmorEfficient = 0;
     public DeadType DeadType = DeadType.Disappear;
     public float DeadActionDelay = 0f;
+    [BoxGroup("Explode")]
+    [ShowIf("DeadType", DeadType.Explode)]
+    public bool ExplosionFriendlyKill = false;
     [ShowIf("KillCheck")]
     public bool DoNotRemoveAfterDeath = false;
     [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
@@ -90,6 +93,7 @@ public class HealthObjectDTO
     public List<DropItem> dropItems;
     public bool DoNotDestroyAfterDeath;
     public List<Commanding> commandings;
+    public bool FFon;
 }
 
 [Serializable]
@@ -204,6 +208,9 @@ public class HealthObjectCompiler : MonoBehaviour
             };
             switch (health.DeadType)
             {
+                case DeadType.Explode:
+                    dTO.FFon = health.ExplosionFriendlyKill;
+                    break;
                 case DeadType.PlayAnimation:
                     dTO.Animator = FindPath(health.Animator.transform);
                     dTO.AnimationName = health.AnimationName;
