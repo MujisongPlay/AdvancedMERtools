@@ -12,9 +12,11 @@ Arrange: Duplicate your objects and arrange them.
 
 Health Object: Adding hitbox to your schematic. **Require plugin.**
 
+Interactable Pickup: Similar to health object. **Require plugin**
+
 Text: text.
 
-Custom RGBA: Allow to exceed max value 255 to make object glow.
+Custom RGBA: Allow to exceed min/max RGBA value 0~255 to make object glow.
 
 **NOTION: Using same script from parent to children is designed to be not errored. But just in case, please use them individually. Idk what will happen but it wouldn't be that good.**
 Tutorial(~Arrange): https://youtu.be/adXuM0UINhE
