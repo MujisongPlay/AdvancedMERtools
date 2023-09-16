@@ -84,7 +84,7 @@ namespace AdvancedMERTools
                         case DeadType.DynamicDisappearing:
                             break;
                         case DeadType.Explode:
-                            Utils.ExplosionUtils.ServerExplode(this.transform.position, player.Footprint);
+                            Utils.ExplosionUtils.ServerExplode(this.transform.position, (Base.FFon ? Server.Host : player).Footprint);
                             Destroy();
                             break;
                         case DeadType.ResetHP:
