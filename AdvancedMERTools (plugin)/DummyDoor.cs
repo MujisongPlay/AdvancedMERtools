@@ -57,12 +57,14 @@ namespace AdvancedMERTools
                     }
                 }
                 this.transform.parent = RealDoor.Base.transform;
+                this.transform.localEulerAngles = Vector3.zero;
+                this.transform.localPosition = Vector3.zero;
                 if (RealDoor.Base.Rooms.Length != 0)
                 {
+                    AdvancedMERTools.Singleton.dummyDoors.Remove(this);
                     Destroy(this.gameObject);
                     return;
                 }
-                Exiled.Events.Handlers.Player.InteractingDoor += OnInteractDoor;
             });
         }
 
@@ -81,7 +83,7 @@ namespace AdvancedMERTools
             if (RealDoor == null) return;
             if ((RealDoor as BreakableDoor).IsDestroyed)
             {
-                Exiled.Events.Handlers.Player.InteractingDoor -= OnInteractDoor;
+                AdvancedMERTools.Singleton.dummyDoors.Remove(this);
                 Destroy(this.gameObject, 0.5f);
             }
         }
