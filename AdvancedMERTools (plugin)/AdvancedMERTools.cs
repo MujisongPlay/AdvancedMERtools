@@ -117,7 +117,16 @@ namespace AdvancedMERTools
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
-            AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
+            foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
+            {
+                if (health == null)
+                {
+                    AdvancedMERTools.Singleton.healthObjects.Remove(health);
+                    continue;
+                }
+                health.OnGrenadeExplode(ev);
+            }
+            //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
 
         public void OnItemPicked(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
