@@ -18,6 +18,8 @@ Text: text.
 
 Custom RGBA: Allow to exceed min/max RGBA value 0~255 to make object glow.
 
+Convertor: If you placed unity's primitives instead of MER's by accident, you can convert them into MER's one. Use it like schematic component. And press "Activate", it will also automatically color your primitive according to material you probably set.
+
 **NOTION: Using same script from parent to children is designed to be not errored. But just in case, please use them individually. Idk what will happen but it wouldn't be that good.**
 Tutorial(~Arrange): https://youtu.be/adXuM0UINhE
 Tutorial(~Text): https://youtu.be/UmkEbiVhDTE
