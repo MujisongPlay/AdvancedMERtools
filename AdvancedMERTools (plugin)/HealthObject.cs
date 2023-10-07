@@ -278,6 +278,11 @@ namespace AdvancedMERTools
             Destroy(this.gameObject);
         }
 
+        void OnDestroy()
+        {
+            AdvancedMERTools.Singleton.healthObjects.Remove(this);
+        }
+
         bool AnimationEnded = false;
 
         //float animationkey = 0;
