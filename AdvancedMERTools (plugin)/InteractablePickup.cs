@@ -21,8 +21,16 @@ namespace AdvancedMERTools
     {
         void Start()
         {
-            AdvancedMERTools.Singleton.InteractablePickups.Add(this);
-            itemSpawn = this.gameObject.GetComponent<ItemSpawnPointObject>();
+            if (gameObject.TryGetComponent<ItemSpawnPointObject>(out ItemSpawnPointObject item))
+            {
+                AdvancedMERTools.Singleton.InteractablePickups.Add(this);
+                itemSpawn = item;
+            }
+            else
+            {
+                ServerConsole.AddLog("Could not find itemspawnpointObject! abort!");
+                Destroy(this);
+            }
         }
 
         public void Destroy()
