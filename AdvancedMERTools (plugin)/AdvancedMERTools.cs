@@ -119,12 +119,14 @@ namespace AdvancedMERTools
         {
             foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
             {
-                if (health == null)
+                try
                 {
-                    AdvancedMERTools.Singleton.healthObjects.Remove(health);
+                    health.OnGrenadeExplode(ev);
+                }
+                catch (NullReferenceException _)
+                {
                     continue;
                 }
-                health.OnGrenadeExplode(ev);
             }
             //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
@@ -237,6 +239,8 @@ namespace AdvancedMERTools
 
         public void OnGen()
         {
+            AdvancedMERTools.Singleton.InteractablePickups.Clear();
+            AdvancedMERTools.Singleton.dummyDoors.Clear();
             if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
             {
                 AutoRun();
