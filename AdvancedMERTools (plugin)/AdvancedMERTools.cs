@@ -116,18 +116,18 @@ namespace AdvancedMERTools
         }
     }
 
-    [HarmonyPatch(typeof(MapEditorReborn.API.Features.MapUtils), nameof(MapEditorReborn.API.Features.MapUtils.SaveMap))]
-    public class MapSavePathcer
-    {
-        static void Prefix()
-        {
-            AdvancedMERTools.Singleton.dummyDoors.ForEach(x => 
-            {
-                UnityEngine.GameObject.Destroy(x.gameObject);
-            });
-            AdvancedMERTools.Singleton.dummyDoors.Clear();
-        }
-    }
+    //[HarmonyPatch(typeof(MapEditorReborn.API.Features.MapUtils), nameof(MapEditorReborn.API.Features.MapUtils.SaveMap))]
+    //public class MapSavePathcer
+    //{
+    //    static void Prefix()
+    //    {
+    //        AdvancedMERTools.Singleton.dummyDoors.ForEach(x => 
+    //        {
+    //            UnityEngine.GameObject.Destroy(x.gameObject);
+    //        });
+    //        AdvancedMERTools.Singleton.dummyDoors.Clear();
+    //    }
+    //}
 
     public class EventManager
     {
