@@ -21,6 +21,8 @@ using MapEditorReborn.API;
 using MapEditorReborn.API.Enums;
 using MapEditorReborn.API.Features.Serializable;
 using Exiled.API.Features.Doors;
+using HarmonyLib;
+using System.Reflection.Emit;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -42,6 +44,8 @@ namespace AdvancedMERTools
         {
             Singleton = this;
             manager = new EventManager();
+            Harmony harmony = new Harmony("AMER");
+            harmony.PatchAll();
 
             Register();
         }
@@ -58,10 +62,10 @@ namespace AdvancedMERTools
             Maps.LoadingMap += manager.OnLoadMap;
             MapEditorReborn.Events.Handlers.Schematic.SchematicSpawned += manager.OnSchematicLoad;
             Exiled.Events.Handlers.Map.Generated += manager.OnGen;
-            Exiled.Events.Handlers.Server.RoundStarted += manager.OnRound;
-            Exiled.Events.Handlers.Map.Decontaminating += manager.OnDecont;
+            //Exiled.Events.Handlers.Server.RoundStarted += manager.OnRound;
+            //Exiled.Events.Handlers.Map.Decontaminating += manager.OnDecont;
             Exiled.Events.Handlers.Map.ExplodingGrenade += manager.OnGrenade;
-            Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
+            //Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
@@ -73,10 +77,10 @@ namespace AdvancedMERTools
             Maps.LoadingMap -= manager.OnLoadMap;
             MapEditorReborn.Events.Handlers.Schematic.SchematicSpawned -= manager.OnSchematicLoad;
             Exiled.Events.Handlers.Map.Generated -= manager.OnGen;
-            Exiled.Events.Handlers.Server.RoundStarted -= manager.OnRound;
-            Exiled.Events.Handlers.Map.Decontaminating -= manager.OnDecont;
+            //Exiled.Events.Handlers.Server.RoundStarted -= manager.OnRound;
+            //Exiled.Events.Handlers.Map.Decontaminating -= manager.OnDecont;
             Exiled.Events.Handlers.Map.ExplodingGrenade -= manager.OnGrenade;
-            Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
+            //Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
@@ -94,6 +98,24 @@ namespace AdvancedMERTools
         }
     }
 
+    [HarmonyPatch(typeof(DoorObject), nameof(DoorObject.Init))]
+    public class DoorSpawnPatcher
+    {
+        static void Prefix(DoorObject __instance)
+        {
+            if (AdvancedMERTools.Singleton.Config.AutoRun && __instance.gameObject.TryGetComponent(out Interactables.Interobjects.BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
+            {
+                string str = "DoorLCZ";
+                if (__instance.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
+                if (__instance.gameObject.name.Contains("EZ")) str = "DoorEZ";
+                SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation);
+                DummyDoor dummy = @object.gameObject.AddComponent<DummyDoor>();
+                AdvancedMERTools.Singleton.dummyDoors.Add(dummy);
+                dummy.RealDoor = Door.Get(basicDoor);
+            }
+        }
+    }
+
     public class EventManager
     {
         Config config = AdvancedMERTools.Singleton.Config;
@@ -105,14 +127,7 @@ namespace AdvancedMERTools
 
         public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
         {
-            AdvancedMERTools.Singleton.dummyDoors.ForEach(x => 
-            {
-                if (x != null)
-                {
-                    x.OnInteractDoor(ev);
-                }
-            });
-            AdvancedMERTools.Singleton.dummyDoors.RemoveAll(x => x == null);
+            AdvancedMERTools.Singleton.dummyDoors.ForEach(x => x.OnInteractDoor(ev));
         }
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
@@ -241,13 +256,13 @@ namespace AdvancedMERTools
         {
             AdvancedMERTools.Singleton.InteractablePickups.Clear();
             AdvancedMERTools.Singleton.dummyDoors.Clear();
-            if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
-            {
-                AutoRun();
-            }
+            //if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
+            //{
+            //    AutoRun();
+            //}
         }
 
-        public void OnRound()
+        /*public void OnRound()
         {
             if (config.AutoRunOnEventList.Contains(Config.EventList.Round))
             {
@@ -269,14 +284,14 @@ namespace AdvancedMERTools
             {
                 AutoRun();
             }
-        }
+        }*/
 
         //public void InstallDoor(DoorObject door)
         //{
         //    ServerConsole.AddLog(".");
         //}
 
-        public void AutoRun()
+        /*public void AutoRun()
         {
             if (!config.AutoRun) return;
             MEC.Timing.CallDelayed(config.AutoRunDelay, () =>
@@ -319,12 +334,14 @@ namespace AdvancedMERTools
                             if (door.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
                             if (door.gameObject.name.Contains("EZ")) str = "DoorEZ";
                             SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation);
-                            @object.gameObject.AddComponent<DummyDoor>().RealDoor = Door.Get(basicDoor);
+                            DummyDoor dummy = @object.gameObject.AddComponent<DummyDoor>();
+                            AdvancedMERTools.Singleton.dummyDoors.Add(dummy);
+                            dummy.RealDoor = Door.Get(basicDoor);
                         }
                     }
                 }
             });
-        }
+        }*/
 
         public void ApplyCustomSpawnPoint(Exiled.Events.EventArgs.Player.SpawnedEventArgs ev)
         {
