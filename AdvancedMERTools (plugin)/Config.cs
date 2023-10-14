@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,17 +31,18 @@ namespace AdvancedMERTools
                 15
             }
         };
-        [Description("If turned on, it will search after specific event occur.")]
+        [Description("If turned on, it will autowork with every MER's door spawning event.")]
         public bool AutoRun { get; set; } = false;
-        [Description("Generated, Round, Decont, Warhead")]
-        public List<EventList> AutoRunOnEventList { get; set; } = new List<EventList>
-        {
-            Config.EventList.Generated,
-        };
-        [Description("If you load massive schematic, extend delay.")]
-        public float AutoRunDelay { get; set; } = 2f;
-        [Description("If you build doors with external-plugin not MER, use this option.")]
-        public bool AutoRunWithEveryDoor { get; set; } = false;
+        //[Description("Generated, Round, Decont, Warhead")]
+        //public List<EventList> AutoRunOnEventList { get; set; } = new List<EventList>
+        //{
+        //    Config.EventList.Generated,
+        //};
+        //[Description("If you load massive schematic, extend delay.")]
+        //public float AutoRunDelay { get; set; } = 2f;
+        //[Description("If you build doors with external-plugin not MER, use this option.")]
+        //public bool AutoRunWithEveryDoor { get; set; } = false;
+        public bool CustomSpawnPointEnable { get; set; } = true;
 
         [Serializable]
         public enum EventList
