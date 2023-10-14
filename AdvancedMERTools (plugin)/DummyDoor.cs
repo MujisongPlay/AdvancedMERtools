@@ -65,6 +65,7 @@ namespace AdvancedMERTools
                     Destroy(this.gameObject);
                     return;
                 }
+                animator.Play("DoorClose");
             });
         }
 
