@@ -261,6 +261,7 @@ public class HealthObjectCompiler : MonoBehaviour
             }
             transform = transform.parent;
             if (transform.TryGetComponent<Schematic>(out _)) break;
+            path += " ";
         }
         return path;
     }
