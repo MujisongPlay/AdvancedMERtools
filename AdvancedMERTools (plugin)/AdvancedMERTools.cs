@@ -248,10 +248,11 @@ namespace AdvancedMERTools
             }
         }
 
-        public static Transform FindObjectWithPath(Transform target, string path)
+        public static Transform FindObjectWithPath(Transform target, string pathO)
         {
-            if (path != "")
+            if (pathO != "")
             {
+                string[] path = pathO.Split(' ');
                 for (int i = path.Length - 1; i > -1; i--)
                 {
                     if (target.childCount == 0 || target.childCount <= int.Parse(path[i].ToString()))
