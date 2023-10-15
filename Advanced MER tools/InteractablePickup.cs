@@ -206,6 +206,7 @@ public class InteractablePickupCompiler
             }
             transform = transform.parent;
             if (transform.TryGetComponent<Schematic>(out _)) break;
+            path += " ";
         }
         return path;
     }
