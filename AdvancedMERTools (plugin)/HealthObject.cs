@@ -219,9 +219,14 @@ namespace AdvancedMERTools
         {
             string command = ApplyFormat(commanding.CommandContext, player, damage);
             string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
-            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1))
+            bool flag = CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1) && commanding.CommandType == CommandType.RemoteAdmin
+                || GameCore.Console.singleton.ConsoleCommandHandler.TryGetCommand(array[0], out command1) && commanding.CommandType == CommandType.ClientConsole;
+            if (flag)
             {
-                command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
+                if (commanding.ExecutorType == ExecutorType.Attacker)
+                    command1.Execute(array.Segment(0), player.Sender, out _);
+                else
+                    command1.Execute(array.Segment(0), ServerConsole.Scs, out _);
             }
         }
 
