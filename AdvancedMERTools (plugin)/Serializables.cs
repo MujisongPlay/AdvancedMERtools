@@ -26,6 +26,7 @@ namespace AdvancedMERTools
         public List<DropItem> dropItems;
         public bool DoNotDestroyAfterDeath;
         public List<Commanding> commandings;
+        public bool FFon;
     }
 
     [Serializable]
@@ -43,6 +44,7 @@ namespace AdvancedMERTools
         public List<DropItem> dropItems;
         public List<Commanding> commandings;
         public Scp914Mode Scp914Mode;
+        public bool FFon;
     }
 
     [Flags]
@@ -141,6 +143,22 @@ namespace AdvancedMERTools
         public string CommandContext;
         public float Chance;
         public bool ForceExecute;
+        public CommandType CommandType;
+        public ExecutorType ExecutorType;
+    }
+
+    [Serializable]
+    public enum CommandType
+    {
+        RemoteAdmin,
+        ClientConsole
+    }
+
+    [Serializable]
+    public enum ExecutorType
+    {
+        Attacker,
+        LocalAdmin
     }
 
     //[Serializable]
