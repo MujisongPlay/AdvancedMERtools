@@ -200,7 +200,7 @@ namespace AdvancedMERTools
             string command = ApplyFormat(commanding.CommandContext, player, pickup);
             string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
             bool flag = CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1) && commanding.CommandType == CommandType.RemoteAdmin
-                || GameCore.Console.singleton.ConsoleCommandHandler.TryGetCommand(array[0], out command1) && commanding.CommandType == CommandType.ClientConsole;
+                || QueryProcessor.DotCommandHandler.TryGetCommand(array[0], out command1) && commanding.CommandType == CommandType.ClientConsole;
             if (flag)
             {
                 if (commanding.ExecutorType == ExecutorType.Attacker)
