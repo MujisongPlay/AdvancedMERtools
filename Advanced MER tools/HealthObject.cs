@@ -161,6 +161,22 @@ public class Commanding
     public string CommandContext;
     public float Chance;
     public bool ForceExecute;
+    public CommandType CommandType;
+    public ExecutorType ExecutorType;
+}
+
+[Serializable]
+public enum CommandType
+{
+    RemoteAdmin,
+    ClientConsole
+}
+
+[Serializable]
+public enum ExecutorType
+{
+    Attacker,
+    LocalAdmin
 }
 
 public class HealthObjectCompiler : MonoBehaviour
