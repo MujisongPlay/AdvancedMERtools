@@ -21,14 +21,13 @@ namespace AdvancedMERTools
     {
         void Start()
         {
-            if (gameObject.TryGetComponent<ItemSpawnPointObject>(out ItemSpawnPointObject item))
+            Pickup = Pickup.Get(this.gameObject);
+            if (Pickup != null)
             {
                 AdvancedMERTools.Singleton.InteractablePickups.Add(this);
-                itemSpawn = item;
             }
             else
             {
-                ServerConsole.AddLog("Could not find itemspawnpointObject! abort!");
                 Destroy(this);
             }
         }
@@ -41,9 +40,7 @@ namespace AdvancedMERTools
 
         public void OnInteracted(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
         {
-            Pickups.Clear();
-            Pickups.AddRange(itemSpawn.AttachedPickups);
-            if (Pickups.Count == 0 || !Pickups.Contains(ev.Pickup))
+            if (ev.Pickup != this.Pickup)
             {
                 return;
             }
@@ -54,7 +51,7 @@ namespace AdvancedMERTools
                     switch (type)
                     {
                         case ActionType.Disappear:
-                            Pickups.Remove(ev.Pickup);
+                            AdvancedMERTools.Singleton.InteractablePickups.Remove(this);
                             ev.Pickup.Destroy();
                             break;
                         case ActionType.Explode:
@@ -230,9 +227,7 @@ namespace AdvancedMERTools
             return context;
         }
 
-        public ItemSpawnPointObject itemSpawn;
-
-        public List<Pickup> Pickups;
+        public Pickup Pickup;
 
         public IPDTO Base;
 
