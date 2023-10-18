@@ -161,8 +161,8 @@ public class Commanding
     public string CommandContext;
     public float Chance;
     public bool ForceExecute;
-    public CommandType CommandType;
-    public ExecutorType ExecutorType;
+    //public CommandType CommandType;
+    //public ExecutorType ExecutorType;
 }
 
 [Serializable]
