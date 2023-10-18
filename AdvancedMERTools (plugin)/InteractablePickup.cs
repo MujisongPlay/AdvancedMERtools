@@ -199,31 +199,40 @@ namespace AdvancedMERTools
         {
             string command = ApplyFormat(commanding.CommandContext, player, pickup);
             string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
-            bool flag = CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out ICommand command1) && commanding.CommandType == CommandType.RemoteAdmin
-                || QueryProcessor.DotCommandHandler.TryGetCommand(array[0], out command1) && commanding.CommandType == CommandType.ClientConsole;
-            if (flag)
+            ICommand command1;
+            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out command1) /*&& commanding.CommandType == CommandType.RemoteAdmin*/)
             {
-                if (commanding.ExecutorType == ExecutorType.Attacker)
-                    command1.Execute(array.Segment(0), player.Sender, out _);
-                else
+                //if (commanding.ExecutorType == ExecutorType.Attacker)
+                //    command1.Execute(array.Segment(0), player.Sender, out _);
+                //else
                     command1.Execute(array.Segment(0), ServerConsole.Scs, out _);
             }
+            //if (commanding.CommandType == CommandType.ClientConsole)
+            //{
+            //    if (commanding.ExecutorType == ExecutorType.Attacker)
+            //        Server.RunCommand(command, player.Sender);
+            //    else
+            //        Server.RunCommand(command, ServerConsole.Scs);
+            //}
         }
 
         string ApplyFormat(string context, Player player, Pickup pickup)
         {
-            context.Replace("{picker_i}", player.Id.ToString());
-            context.Replace("{picker_name}", player.Nickname);
+            context = context.Replace("{picker_i}", player.Id.ToString())
+            .Replace("{picker_name}", player.Nickname);
             Vector3 vector3 = player.Position;
-            context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-            context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString());
-            context.Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
-            context.Replace("{a_role}", player.Role.Type.ToString());
+            context = context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+            context = context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString())
+            .Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString())
+            .Replace("{a_role}", player.Role.Type.ToString());
             vector3 = pickup.Transform.position;
-            context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-            context.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString());
-            context.Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
-            context.Replace("{a_item}", player.CurrentItem.Type.ToString());
+            context = context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z))
+            .Replace("{s_room}", Room.Get(this.transform.position).Type.ToString())
+            .Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
+            if (player.CurrentItem == null)
+                context = context.Replace("{a_item}", "null");
+            else
+                context = context.Replace("{a_item}", player.CurrentItem.Type.ToString());
             return context;
         }
 
