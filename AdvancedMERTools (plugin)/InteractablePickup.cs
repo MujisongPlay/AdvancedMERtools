@@ -70,26 +70,32 @@ namespace AdvancedMERTools
                             }
                             break;
                         case ActionType.Warhead:
-                            switch (Base.warheadActionType)
+                            foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
                             {
-                                case WarheadActionType.Start:
-                                    Warhead.Start();
-                                    break;
-                                case WarheadActionType.Stop:
-                                    Warhead.Stop();
-                                    break;
-                                case WarheadActionType.Lock:
-                                    Warhead.IsLocked = true;
-                                    break;
-                                case WarheadActionType.UnLock:
-                                    Warhead.IsLocked = false;
-                                    break;
-                                case WarheadActionType.Disable:
-                                    Warhead.LeverStatus = false;
-                                    break;
-                                case WarheadActionType.Enable:
-                                    Warhead.LeverStatus = true;
-                                    break;
+                                if (Base.warheadActionType.HasFlag(warhead))
+                                {
+                                    switch (warhead)
+                                    {
+                                        case WarheadActionType.Start:
+                                            Warhead.Start();
+                                            break;
+                                        case WarheadActionType.Stop:
+                                            Warhead.Stop();
+                                            break;
+                                        case WarheadActionType.Lock:
+                                            Warhead.IsLocked = true;
+                                            break;
+                                        case WarheadActionType.UnLock:
+                                            Warhead.IsLocked = false;
+                                            break;
+                                        case WarheadActionType.Disable:
+                                            Warhead.LeverStatus = false;
+                                            break;
+                                        case WarheadActionType.Enable:
+                                            Warhead.LeverStatus = true;
+                                            break;
+                                    }
+                                }
                             }
                             break;
                         case ActionType.SendMessage:
@@ -205,7 +211,7 @@ namespace AdvancedMERTools
                 //if (commanding.ExecutorType == ExecutorType.Attacker)
                 //    command1.Execute(array.Segment(0), player.Sender, out _);
                 //else
-                    command1.Execute(array.Segment(0), ServerConsole.Scs, out _);
+                    command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
             }
             //if (commanding.CommandType == CommandType.ClientConsole)
             //{
