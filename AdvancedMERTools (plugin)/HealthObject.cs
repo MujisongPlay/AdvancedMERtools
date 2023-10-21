@@ -73,124 +73,136 @@ namespace AdvancedMERTools
                 EventHandler.OnHealthObjectDead(new HealthObjectDeadEventArgs(clone, player));
                 MEC.Timing.CallDelayed(Base.DeadDelay, () =>
                 {
-                    switch (Base.DeadType)
+                    foreach (DeadType type in Enum.GetValues(typeof(DeadType)))
                     {
-                        case DeadType.Disappear:
-                            Destroy();
-                            break;
-                        case DeadType.GetRigidbody:
-                            this.gameObject.AddComponent<Rigidbody>();
-                            break;
-                        case DeadType.DynamicDisappearing:
-                            break;
-                        case DeadType.Explode:
-                            Utils.ExplosionUtils.ServerExplode(this.transform.position, (Base.FFon ? Server.Host : player).Footprint);
-                            Destroy();
-                            break;
-                        case DeadType.ResetHP:
-                            Health = Base.ResetHPTo == 0 ? Base.Health : Base.ResetHPTo;
-                            IsAlive = true;
-                            break;
-                        case DeadType.PlayAnimation:
-                            if (animator != null)
+                        if (Base.DeadType.HasFlag(type))
+                        {
+                            switch (type)
                             {
-                                if (Base.AnimationType == AnimationType.Start)
-                                {
-                                    animator.speed = 1f;
-                                    animator.Play(Base.AnimationName);
-                                }
-                                else
-                                    animator.speed = 0f;
+                                case DeadType.Disappear:
+                                    Destroy();
+                                    break;
+                                case DeadType.GetRigidbody:
+                                    this.gameObject.AddComponent<Rigidbody>();
+                                    break;
+                                case DeadType.DynamicDisappearing:
+                                    break;
+                                case DeadType.Explode:
+                                    Utils.ExplosionUtils.ServerExplode(this.transform.position, (Base.FFon ? Server.Host : player).Footprint);
+                                    Destroy();
+                                    break;
+                                case DeadType.ResetHP:
+                                    Health = Base.ResetHPTo == 0 ? Base.Health : Base.ResetHPTo;
+                                    IsAlive = true;
+                                    break;
+                                case DeadType.PlayAnimation:
+                                    if (animator != null)
+                                    {
+                                        if (Base.AnimationType == AnimationType.Start)
+                                        {
+                                            animator.speed = 1f;
+                                            animator.Play(Base.AnimationName);
+                                        }
+                                        else
+                                            animator.speed = 0f;
+                                    }
+                                    break;
+                                case DeadType.Warhead:
+                                    foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
+                                    {
+                                        if (Base.warheadActionType.HasFlag(warhead))
+                                        {
+                                            switch (warhead)
+                                            {
+                                                case WarheadActionType.Start:
+                                                    Warhead.Start();
+                                                    break;
+                                                case WarheadActionType.Stop:
+                                                    Warhead.Stop();
+                                                    break;
+                                                case WarheadActionType.Lock:
+                                                    Warhead.IsLocked = true;
+                                                    break;
+                                                case WarheadActionType.UnLock:
+                                                    Warhead.IsLocked = false;
+                                                    break;
+                                                case WarheadActionType.Disable:
+                                                    Warhead.LeverStatus = false;
+                                                    break;
+                                                case WarheadActionType.Enable:
+                                                    Warhead.LeverStatus = true;
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                    break;
+                                case DeadType.SendMessage:
+                                    Player[] players = Player.List.ToArray();
+                                    if (Base.SendType == SendType.Killer)
+                                    {
+                                        players = new Player[] { player };
+                                    }
+                                    switch (Base.MessageType)
+                                    {
+                                        case MessageType.Cassie:
+                                            Cassie.Message(ApplyFormat(Base.MessageContent, player, damage), false, true, true);
+                                            break;
+                                        case MessageType.BroadCast:
+                                            players.ForEach(x => x.Broadcast(3, ApplyFormat(Base.MessageContent, player, damage)));
+                                            break;
+                                        case MessageType.Hint:
+                                            players.ForEach(x => x.ShowHint(ApplyFormat(Base.MessageContent, player, damage)));
+                                            break;
+                                    }
+                                    break;
+                                case DeadType.DropItems:
+                                    if (Base.dropItems.Count == 0)
+                                    {
+                                        return;
+                                    }
+                                    float Chance = 0;
+                                    Base.dropItems.ForEach(x => Chance += x.Chance);
+                                    Chance = UnityEngine.Random.Range(0f, Chance);
+                                    foreach (DropItem item in Base.dropItems)
+                                    {
+                                        if (item.ForceSpawn)
+                                        {
+                                            CreateItem(item);
+                                            continue;
+                                        }
+                                        if (Chance <= 0) continue;
+                                        Chance -= item.Chance;
+                                        if (Chance <= 0 && item.Count > 0)
+                                        {
+                                            CreateItem(item);
+                                        }
+                                    }
+                                    break;
+                                case DeadType.SendCommand:
+                                    if (Base.commandings.Count == 0)
+                                    {
+                                        return;
+                                    }
+                                    Chance = 0;
+                                    Base.commandings.ForEach(x => Chance += x.Chance);
+                                    Chance = UnityEngine.Random.Range(0f, Chance);
+                                    foreach (Commanding commanding in Base.commandings)
+                                    {
+                                        if (commanding.ForceExecute && commanding.CommandContext != "")
+                                        {
+                                            ExecuteCommand(commanding, player, damage);
+                                            continue;
+                                        }
+                                        if (Chance <= 0) continue;
+                                        Chance -= commanding.Chance;
+                                        if (Chance <= 0 && commanding.CommandContext != "")
+                                        {
+                                            ExecuteCommand(commanding, player, damage);
+                                        }
+                                    }
+                                    break;
                             }
-                            break;
-                        case DeadType.Warhead:
-                            switch (Base.warheadActionType)
-                            {
-                                case WarheadActionType.Start:
-                                    Warhead.Start();
-                                    break;
-                                case WarheadActionType.Stop:
-                                    Warhead.Stop();
-                                    break;
-                                case WarheadActionType.Lock:
-                                    Warhead.IsLocked = true;
-                                    break;
-                                case WarheadActionType.UnLock:
-                                    Warhead.IsLocked = false;
-                                    break;
-                                case WarheadActionType.Disable:
-                                    Warhead.LeverStatus = false;
-                                    break;
-                                case WarheadActionType.Enable:
-                                    Warhead.LeverStatus = true;
-                                    break;
-                            }
-                            break;
-                        case DeadType.SendMessage:
-                            Player[] players = Player.List.ToArray();
-                            if (Base.SendType == SendType.Killer)
-                            {
-                                players = new Player[] { player };
-                            }
-                            switch (Base.MessageType)
-                            {
-                                case MessageType.Cassie:
-                                    Cassie.Message(ApplyFormat(Base.MessageContent, player, damage), false, true, true);
-                                    break;
-                                case MessageType.BroadCast:
-                                    players.ForEach(x => x.Broadcast(3, ApplyFormat(Base.MessageContent, player, damage)));
-                                    break;
-                                case MessageType.Hint:
-                                    players.ForEach(x => x.ShowHint(ApplyFormat(Base.MessageContent, player, damage)));
-                                    break;
-                            }
-                            break;
-                        case DeadType.DropItems:
-                            if (Base.dropItems.Count == 0)
-                            {
-                                return;
-                            }
-                            float Chance = 0;
-                            Base.dropItems.ForEach(x => Chance += x.Chance);
-                            Chance = UnityEngine.Random.Range(0f, Chance);
-                            foreach (DropItem item in Base.dropItems)
-                            {
-                                if (item.ForceSpawn)
-                                {
-                                    CreateItem(item);
-                                    continue;
-                                }
-                                if (Chance <= 0) continue;
-                                Chance -= item.Chance;
-                                if (Chance <= 0 && item.Count > 0)
-                                {
-                                    CreateItem(item);
-                                }
-                            }
-                            break;
-                        case DeadType.SendCommand:
-                            if (Base.commandings.Count == 0)
-                            {
-                                return;
-                            }
-                            Chance = 0;
-                            Base.commandings.ForEach(x => Chance += x.Chance);
-                            Chance = UnityEngine.Random.Range(0f, Chance);
-                            foreach (Commanding commanding in Base.commandings)
-                            {
-                                if (commanding.ForceExecute && commanding.CommandContext != "")
-                                {
-                                    ExecuteCommand(commanding, player, damage);
-                                    continue;
-                                }
-                                if (Chance <= 0) continue;
-                                Chance -= commanding.Chance;
-                                if (Chance <= 0 && commanding.CommandContext != "")
-                                {
-                                    ExecuteCommand(commanding, player, damage);
-                                }
-                            }
-                            break;
+                        }
                     }
                 });
             }
@@ -225,7 +237,7 @@ namespace AdvancedMERTools
                 //if (commanding.ExecutorType == ExecutorType.Attacker)
                 //    command1.Execute(array.Segment(0), player.Sender, out _);
                 //else
-                    command1.Execute(array.Segment(0), ServerConsole.Scs, out _);
+                    command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
             }
             //if (commanding.CommandType == CommandType.ClientConsole)
             //{
