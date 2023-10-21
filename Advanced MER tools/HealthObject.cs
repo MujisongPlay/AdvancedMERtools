@@ -96,30 +96,32 @@ public class HealthObjectDTO
     public bool FFon;
 }
 
+[Flags]
 [Serializable]
 public enum DeadType
 {
-    Disappear,
-    GetRigidbody,
-    DynamicDisappearing,
-    Explode,
-    ResetHP,
-    PlayAnimation,
-    Warhead,
-    SendMessage,
-    DropItems,
-    SendCommand
+    Disappear = 1,
+    GetRigidbody = 2,
+    DynamicDisappearing = 4,
+    Explode = 8,
+    ResetHP = 16,
+    PlayAnimation = 32,
+    Warhead = 64,
+    SendMessage = 128,
+    DropItems = 256,
+    SendCommand = 512
 }
 
+[Flags]
 [Serializable]
 public enum WarheadActionType
 {
-    Start,
-    Stop,
-    Lock,
-    UnLock,
-    Disable,
-    Enable
+    Start = 1,
+    Stop = 2,
+    Lock = 4,
+    UnLock = 8,
+    Disable = 16,
+    Enable = 32
 }
 
 [Serializable]
@@ -222,34 +224,41 @@ public class HealthObjectCompiler : MonoBehaviour
                 DeadDelay = health.DeadActionDelay,
                 DoNotDestroyAfterDeath = health.DoNotRemoveAfterDeath
             };
-            switch (health.DeadType)
+            foreach (DeadType type in Enum.GetValues(typeof(DeadType)))
             {
-                case DeadType.Explode:
-                    dTO.FFon = health.ExplosionFriendlyKill;
-                    break;
-                case DeadType.PlayAnimation:
-                    dTO.Animator = FindPath(health.Animator.transform);
-                    dTO.AnimationName = health.AnimationName;
-                    dTO.AnimationType = health.AnimationType;
-                    break;
-                case DeadType.Warhead:
-                    dTO.warheadActionType = health.warheadAction;
-                    break;
-                case DeadType.ResetHP:
-                    dTO.ResetHPTo = health.ResetHPTo;
-                    break;
-                case DeadType.DropItems:
-                    dTO.dropItems = health.DropItems;
-                    break;
-                case DeadType.SendMessage:
-                    dTO.MessageType = health.MessageType;
-                    dTO.MessageContent = health.MessageContent;
-                    dTO.SendType = health.SendType;
-                    break;
-                case DeadType.SendCommand:
-                    dTO.commandings = health.Commandings;
-                    break;
+                if (dTO.DeadType.HasFlag(type))
+                {
+                    switch (type)
+                    {
+                        case DeadType.Explode:
+                            dTO.FFon = health.ExplosionFriendlyKill;
+                            break;
+                        case DeadType.PlayAnimation:
+                            dTO.Animator = FindPath(health.Animator.transform);
+                            dTO.AnimationName = health.AnimationName;
+                            dTO.AnimationType = health.AnimationType;
+                            break;
+                        case DeadType.Warhead:
+                            dTO.warheadActionType = health.warheadAction;
+                            break;
+                        case DeadType.ResetHP:
+                            dTO.ResetHPTo = health.ResetHPTo;
+                            break;
+                        case DeadType.DropItems:
+                            dTO.dropItems = health.DropItems;
+                            break;
+                        case DeadType.SendMessage:
+                            dTO.MessageType = health.MessageType;
+                            dTO.MessageContent = health.MessageContent;
+                            dTO.SendType = health.SendType;
+                            break;
+                        case DeadType.SendCommand:
+                            dTO.commandings = health.Commandings;
+                            break;
+                    }
+                }
             }
+
             healthObjects.Add(dTO);
         }
 
