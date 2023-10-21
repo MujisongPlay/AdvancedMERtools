@@ -72,19 +72,20 @@ namespace AdvancedMERTools
         UpgradeItem = 128
     }
 
+    [Flags]
     [Serializable]
     public enum DeadType
     {
-        Disappear,
-        GetRigidbody,
-        DynamicDisappearing,
-        Explode,
-        ResetHP,
-        PlayAnimation,
-        Warhead,
-        SendMessage,
-        DropItems,
-        SendCommand
+        Disappear = 1,
+        GetRigidbody = 2,
+        DynamicDisappearing = 4,
+        Explode = 8,
+        ResetHP = 16,
+        PlayAnimation = 32,
+        Warhead = 64,
+        SendMessage = 128,
+        DropItems = 256,
+        SendCommand = 512
     }
 
     [Serializable]
@@ -94,15 +95,16 @@ namespace AdvancedMERTools
         Stop
     }
 
+    [Flags]
     [Serializable]
     public enum WarheadActionType
     {
-        Start,
-        Stop,
-        Lock,
-        UnLock,
-        Disable,
-        Enable
+        Start = 1,
+        Stop = 2,
+        Lock = 4,
+        UnLock = 8,
+        Disable = 16,
+        Enable = 32
     }
 
     [Serializable]
@@ -143,23 +145,23 @@ namespace AdvancedMERTools
         public string CommandContext;
         public float Chance;
         public bool ForceExecute;
-        public CommandType CommandType;
-        public ExecutorType ExecutorType;
+        //public CommandType CommandType;
+        //public ExecutorType ExecutorType;
     }
 
-    [Serializable]
-    public enum CommandType
-    {
-        RemoteAdmin,
-        ClientConsole
-    }
+    //[Serializable]
+    //public enum CommandType
+    //{
+    //    RemoteAdmin,
+    //    ClientConsole
+    //}
 
-    [Serializable]
-    public enum ExecutorType
-    {
-        Attacker,
-        LocalAdmin
-    }
+    //[Serializable]
+    //public enum ExecutorType
+    //{
+    //    Attacker,
+    //    LocalAdmin
+    //}
 
     //[Serializable]
     //public class DoorInstallingGuideDTO
