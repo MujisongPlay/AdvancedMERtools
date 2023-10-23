@@ -1,3 +1,8 @@
+# How to install
+![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/6a039a90-feef-47c0-b1ca-2c49fe2e4e42)
+Download files that you need in above folder. And drag them into project tab in unity editor.
+And in release, you can download plugin that helps execute functions and modeling of LCZ, HCZ, EZ doors.
+
 # AdvancedMERtools
 Advanced(actually helpful) tools for SCP: SL plugin MER (Map Editor Reborn)
 Download from above folder, and put them in your project. There may be more features in the future.
