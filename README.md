@@ -1,6 +1,6 @@
 # How to install
 ![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/6a039a90-feef-47c0-b1ca-2c49fe2e4e42)
-Download files that you need in above folder. And drag them into project tab in unity editor.
+Download files that you need in above folder. And drag them into project tab in unity editor. And follow the tutorial billow.
 And in release, you can download plugin that helps execute functions and modeling of LCZ, HCZ, EZ doors.
 
 # AdvancedMERtools
@@ -26,6 +26,7 @@ Custom RGBA: Allow to exceed min/max RGBA value 0~255 to make object glow.
 Convertor: If you placed unity's primitives instead of MER's by accident, you can convert them into MER's one. Use it like schematic component. And press "Activate", it will also automatically color your primitive according to material you probably set.
 
 **NOTION: Using same script from parent to children is designed to be not errored. But just in case, please use them individually. Idk what will happen but it wouldn't be that good.**
+
 Tutorial(~Arrange): https://youtu.be/adXuM0UINhE
 Tutorial(~Text): https://youtu.be/UmkEbiVhDTE
 
