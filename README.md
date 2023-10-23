@@ -1,5 +1,5 @@
 # How to install
-![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/6a039a90-feef-47c0-b1ca-2c49fe2e4e42)
+![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/75234329-ec8c-48e6-b613-9efefdcff1b2)
 Download files that you need in above folder. And drag them into project tab in unity editor. And follow the tutorial billow.
 And in release, you can download plugin that helps execute functions and modeling of LCZ, HCZ, EZ doors.
 
