@@ -217,14 +217,6 @@ namespace AdvancedMERTools
                     Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
                     HealthObject health = target.gameObject.AddComponent<HealthObject>();
                     health.Base = dTO;
-                    if (dTO.DeadType.HasFlag(DeadType.PlayAnimation))
-                    {
-                        target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
-                        if (target.TryGetComponent<Animator>(out Animator animator))
-                        {
-                            health.animator = animator;
-                        }
-                    }
                 }
             }
             path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-Pickups.json");
@@ -236,14 +228,6 @@ namespace AdvancedMERTools
                     Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
                     InteractablePickup health = target.gameObject.AddComponent<InteractablePickup>();
                     health.Base = dTO;
-                    if (dTO.ActionType.HasFlag(ActionType.PlayAnimation))
-                    {
-                        target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
-                        if (target.TryGetComponent<Animator>(out Animator animator))
-                        {
-                            health.animator = animator;
-                        }
-                    }
                 }
             }
         }
