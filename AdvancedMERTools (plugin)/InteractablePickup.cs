@@ -58,15 +58,56 @@ namespace AdvancedMERTools
                             Utils.ExplosionUtils.ServerExplode(ev.Pickup.Position, (Base.FFon ? Server.Host : ev.Player).Footprint);
                             break;
                         case ActionType.PlayAnimation:
-                            if (animator != null)
+                            if (modules.Count == 0)
                             {
-                                if (Base.AnimationType == AnimationType.Start)
+                                foreach (AnimationDTO dTO in Base.animationDTOs)
                                 {
-                                    animator.speed = 1f;
-                                    animator.Play(Base.AnimationName);
+                                    if (!EventManager.FindObjectWithPath(this.GetComponentInParent<SchematicObject>().transform, dTO.Animator).TryGetComponent(out Animator animator))
+                                    {
+                                        ServerConsole.AddLog("Cannot find appopriate animator!");
+                                        continue;
+                                    }
+                                    modules.Add(new AnimationModule
+                                    {
+                                        Animator = animator,
+                                        AnimationName = dTO.Animation,
+                                        AnimationType = dTO.AnimationType,
+                                        ChanceWeight = dTO.Chance,
+                                        ForceExecute = dTO.Force
+                                    });
+                                }
+                                if (modules.Count == 0)
+                                {
+                                    break;
+                                }
+                            }
+                            float Chance = 0f;
+                            modules.ForEach(x => Chance += x.ChanceWeight);
+                            Chance = UnityEngine.Random.Range(0, Chance);
+                            foreach (AnimationModule module in modules)
+                            {
+                                if (module.Animator == null)
+                                    continue;
+                                if (module.ForceExecute)
+                                {
+                                    goto IL_01;
+                                }
+                                if (Chance <= 0)
+                                    continue;
+                                Chance -= module.ChanceWeight;
+                                if (Chance <= 0)
+                                {
+                                    goto IL_01;
+                                }
+                                continue;
+                                IL_01:
+                                if (module.AnimationType == AnimationType.Start)
+                                {
+                                    module.Animator.Play(module.AnimationName);
+                                    module.Animator.speed = 1f;
                                 }
                                 else
-                                    animator.speed = 0f;
+                                    module.Animator.speed = 0f;
                             }
                             break;
                         case ActionType.Warhead:
@@ -122,7 +163,7 @@ namespace AdvancedMERTools
                             {
                                 return;
                             }
-                            float Chance = 0;
+                            Chance = 0;
                             Base.dropItems.ForEach(x => Chance += x.Chance);
                             Chance = UnityEngine.Random.Range(0f, Chance);
                             foreach (DropItem item in Base.dropItems)
@@ -246,6 +287,6 @@ namespace AdvancedMERTools
 
         public IPDTO Base;
 
-        public Animator animator;
+        public List<AnimationModule> modules = new List<AnimationModule> { };
     }
 }
