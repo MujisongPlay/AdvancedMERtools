@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace AdvancedMERTools
 {
@@ -15,9 +16,7 @@ namespace AdvancedMERTools
         public float DeadDelay;
         public float ResetHPTo;
         public string ObjectId;
-        public string Animator;
-        public string AnimationName;
-        public AnimationType AnimationType;
+        public List<AnimationDTO> animationDTOs;
         public List<WhitelistWeapon> whitelistWeapons;
         public WarheadActionType warheadActionType;
         public string MessageContent;
@@ -34,9 +33,7 @@ namespace AdvancedMERTools
     {
         public ActionType ActionType;
         public string ObjectId;
-        public string Animator;
-        public string AnimationName;
-        public AnimationType AnimationType;
+        public List<AnimationDTO> animationDTOs;
         public WarheadActionType warheadActionType;
         public string MessageContent;
         public MessageType MessageType;
@@ -70,6 +67,26 @@ namespace AdvancedMERTools
         DropItems = 32,
         SendCommand = 64,
         UpgradeItem = 128
+    }
+
+    [Serializable]
+    public class AnimationDTO
+    {
+        public string Animator;
+        public string Animation;
+        public AnimationType AnimationType;
+        public float Chance;
+        public bool Force;
+    }
+
+    [Serializable]
+    public class AnimationModule
+    {
+        public Animator Animator;
+        public string AnimationName;
+        public AnimationType AnimationType;
+        public float ChanceWeight;
+        public bool ForceExecute;
     }
 
     [Flags]
