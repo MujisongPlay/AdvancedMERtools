@@ -13,16 +13,11 @@ public class InteractablePickup : MonoBehaviour
     public ActionType ActionType;
     [BoxGroup("Animation")]
     [ShowIf("ActionType", ActionType.PlayAnimation)]
-    public GameObject Animator = null;
-    [BoxGroup("Animation")]
-    [ShowIf("ActionType", ActionType.PlayAnimation)]
-    public string AnimationName = "";
+    [ReorderableList]
+    public List<AnimationModule> AnimationModules = new List<AnimationModule> { };
     [BoxGroup("Explode")]
     [ShowIf("ActionType", ActionType.Explode)]
     public bool ExplosionFriendlyKill = false;
-    [BoxGroup("Animation")]
-    [ShowIf("ActionType", ActionType.PlayAnimation)]
-    public AnimationType AnimationType = AnimationType.Start;
     [BoxGroup("Warhead")]
     [ShowIf("ActionType", ActionType.Warhead)]
     public WarheadActionType warheadAction = WarheadActionType.Start;
@@ -60,9 +55,7 @@ public class IPDTO
 {
     public ActionType ActionType;
     public string ObjectId;
-    public string Animator;
-    public string AnimationName;
-    public AnimationType AnimationType;
+    public List<AnimationDTO> animationDTOs;
     public WarheadActionType warheadActionType;
     public string MessageContent;
     public MessageType MessageType;
@@ -153,11 +146,18 @@ public class InteractablePickupCompiler
                             DTO.dropItems = ip.DropItems;
                             break;
                         case ActionType.PlayAnimation:
-                            if (ip.Animator == null)
-                                break;
-                            DTO.AnimationName = ip.AnimationName;
-                            DTO.AnimationType = ip.AnimationType;
-                            DTO.Animator = FindPath(ip.Animator.transform);
+                            DTO.animationDTOs = new List<AnimationDTO> { };
+                            foreach (AnimationModule module in ip.AnimationModules)
+                            {
+                                DTO.animationDTOs.Add(new AnimationDTO
+                                {
+                                    Animator = FindPath(module.Animator.transform),
+                                    Animation = module.AnimationName,
+                                    AnimationType = module.AnimationType,
+                                    Force = module.ForceExecute,
+                                    Chance = module.ChanceWeight
+                                });
+                            }
                             break;
                         case ActionType.Warhead:
                             DTO.warheadActionType = ip.warheadAction;
