@@ -20,13 +20,10 @@ public class HealthObject : MonoBehaviour
     public bool ExplosionFriendlyKill = false;
     [ShowIf("KillCheck")]
     public bool DoNotRemoveAfterDeath = false;
-    [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
-    public GameObject Animator = null;
-    [BoxGroup("Animation")] [ShowIf("DeadType", DeadType.PlayAnimation)]
-    public string AnimationName = "";
     [BoxGroup("Animation")]
     [ShowIf("DeadType", DeadType.PlayAnimation)]
-    public AnimationType AnimationType = AnimationType.Start;
+    [ReorderableList]
+    public List<AnimationModule> AnimationModules = new List<AnimationModule> { };
     [BoxGroup("Warhead")]
     [ShowIf("DeadType", DeadType.Warhead)]
     public WarheadActionType warheadAction = WarheadActionType.Start;
@@ -82,9 +79,7 @@ public class HealthObjectDTO
     public float DeadDelay;
     public float ResetHPTo;
     public string ObjectId;
-    public string Animator;
-    public string AnimationName;
-    public AnimationType AnimationType;
+    public List<AnimationDTO> animationDTOs;
     public List<WhitelistWeapon> whitelistWeapons;
     public WarheadActionType warheadActionType;
     public string MessageContent;
@@ -94,6 +89,16 @@ public class HealthObjectDTO
     public bool DoNotDestroyAfterDeath;
     public List<Commanding> commandings;
     public bool FFon;
+}
+
+[Serializable]
+public class AnimationDTO
+{
+    public string Animator;
+    public string Animation;
+    public AnimationType AnimationType;
+    public float Chance;
+    public bool Force;
 }
 
 [Flags]
@@ -110,6 +115,16 @@ public enum DeadType
     SendMessage = 128,
     DropItems = 256,
     SendCommand = 512
+}
+
+[Serializable]
+public class AnimationModule
+{
+    public GameObject Animator;
+    public string AnimationName;
+    public AnimationType AnimationType;
+    public float ChanceWeight;
+    public bool ForceExecute;
 }
 
 [Flags]
@@ -234,9 +249,18 @@ public class HealthObjectCompiler : MonoBehaviour
                             dTO.FFon = health.ExplosionFriendlyKill;
                             break;
                         case DeadType.PlayAnimation:
-                            dTO.Animator = FindPath(health.Animator.transform);
-                            dTO.AnimationName = health.AnimationName;
-                            dTO.AnimationType = health.AnimationType;
+                            dTO.animationDTOs = new List<AnimationDTO> { };
+                            foreach (AnimationModule module in health.AnimationModules)
+                            {
+                                dTO.animationDTOs.Add(new AnimationDTO
+                                {
+                                    Animator = FindPath(module.Animator.transform),
+                                    Animation = module.AnimationName,
+                                    AnimationType = module.AnimationType,
+                                    Force = module.ForceExecute,
+                                    Chance = module.ChanceWeight
+                                });
+                            }
                             break;
                         case DeadType.Warhead:
                             dTO.warheadActionType = health.warheadAction;
