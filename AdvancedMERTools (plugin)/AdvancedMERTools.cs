@@ -68,7 +68,7 @@ namespace AdvancedMERTools
             //Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
-            Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.SearchingPickup += new CustomEventHandler<Exiled.Events.EventArgs.Player.SearchingPickupEventArgs>(manager.OnItemPicked);
             Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
         }
 
@@ -83,7 +83,7 @@ namespace AdvancedMERTools
             //Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
-            Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.SearchingPickup -= new CustomEventHandler<Exiled.Events.EventArgs.Player.SearchingPickupEventArgs> (manager.OnItemPicked);
             Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
         }
     }
@@ -159,7 +159,7 @@ namespace AdvancedMERTools
             //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
 
-        public void OnItemPicked(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
+        public void OnItemPicked(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
         {
             foreach (InteractablePickup pickup in AdvancedMERTools.Singleton.InteractablePickups)
             {
