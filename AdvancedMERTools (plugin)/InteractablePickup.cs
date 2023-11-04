@@ -38,7 +38,7 @@ namespace AdvancedMERTools
             Destroy(this);
         }
 
-        public void OnInteracted(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
+        public void OnInteracted(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
         {
             if (ev.Pickup != this.Pickup)
             {
