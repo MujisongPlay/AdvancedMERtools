@@ -292,22 +292,29 @@ namespace AdvancedMERTools
 
         string ApplyFormat(string context, Player player, float damage)
         {
-            context = context.Replace("{attacker_i}", player.Id.ToString())
-            .Replace("{attacker_name}", player.Nickname);
-            Vector3 vector3 = player.Position;
-            context = context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z))
-            .Replace("{a_room}", player.CurrentRoom.RoomName.ToString())
-            .Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString())
-            .Replace("{a_role}", player.Role.Type.ToString());
-            vector3 = this.transform.position;
-            context = context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z))
-            .Replace("{s_room}", Room.Get(this.transform.position).Type.ToString())
-            .Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString())
-            .Replace("{damage}", damage.ToString());
-            if (player.CurrentItem == null)
-                context = context.Replace("{a_item}", "null");
-            else
-                context = context.Replace("{a_item}", player.CurrentItem.Type.ToString());
+            try
+            {
+                context = context.Replace("{attacker_i}", player.Id.ToString())
+                .Replace("{attacker_name}", player.Nickname)
+                .Replace("{a_role}", player.Role.Type.ToString())
+                .Replace("{damage}", damage.ToString());
+                Vector3 vector3 = player.Position;
+                context = context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+                if (player.CurrentRoom != null)
+                    context = context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString())
+                    .Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
+                vector3 = this.transform.position;
+                context = context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
+                Room room = Room.Get(this.transform.position);
+                if (room != null)
+                    context = context.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString())
+                    .Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
+                if (player.CurrentItem == null)
+                    context = context.Replace("{a_item}", "null");
+                else
+                    context = context.Replace("{a_item}", player.CurrentItem.Type.ToString());
+            }
+            catch (Exception) { }
             return context;
         }
 
