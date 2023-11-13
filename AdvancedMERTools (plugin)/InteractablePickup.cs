@@ -38,8 +38,9 @@ namespace AdvancedMERTools
             Destroy(this);
         }
 
-        public void OnInteracted(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
+        public void OnInteracted(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev, out bool Remove)
         {
+            Remove = false;
             if (ev.Pickup != this.Pickup)
             {
                 return;
@@ -51,8 +52,7 @@ namespace AdvancedMERTools
                     switch (type)
                     {
                         case ActionType.Disappear:
-                            AdvancedMERTools.Singleton.InteractablePickups.Remove(this);
-                            ev.Pickup.Destroy();
+                            Remove = true;
                             break;
                         case ActionType.Explode:
                             Utils.ExplosionUtils.ServerExplode(ev.Pickup.Position, (Base.FFon ? Server.Host : ev.Player).Footprint);
