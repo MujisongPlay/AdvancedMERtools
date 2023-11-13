@@ -161,13 +161,19 @@ namespace AdvancedMERTools
 
         public void OnItemPicked(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
         {
+            List<InteractablePickup> list = new List<InteractablePickup> { };
             foreach (InteractablePickup pickup in AdvancedMERTools.Singleton.InteractablePickups)
             {
                 if (pickup != null)
                 {
-                    pickup.OnInteracted(ev);
+                    pickup.OnInteracted(ev, out bool remove);
+                    if (remove)
+                    {
+                        list.Add(pickup);
+                    }
                 }
             }
+            list.ForEach(x => { x.Pickup.Destroy(); AdvancedMERTools.Singleton.InteractablePickups.Remove(x); });
         }
 
         //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
