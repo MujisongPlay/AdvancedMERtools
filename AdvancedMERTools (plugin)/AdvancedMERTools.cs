@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Reflection;
 using Exiled.API.Features;
 using Exiled.API.Enums;
 using Exiled.Loader;
 using UnityEngine;
+using Exiled.API.Features.Pickups;
 using CustomCulling;
 using Interactables.Interobjects;
 using Interactables;
@@ -22,7 +24,12 @@ using MapEditorReborn.API.Enums;
 using MapEditorReborn.API.Features.Serializable;
 using Exiled.API.Features.Doors;
 using HarmonyLib;
+using Mirror;
 using System.Reflection.Emit;
+using PlayerRoles.FirstPersonControl;
+using CommandSystem;
+using CommandSystem.Commands;
+using RemoteAdmin;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -30,6 +37,8 @@ namespace AdvancedMERTools
 {
     public class AdvancedMERTools : Plugin<Config>
     {
+        public override PluginPriority Priority => PluginPriority.Last;
+
         private EventManager manager;
 
         public static AdvancedMERTools Singleton;
@@ -38,13 +47,21 @@ namespace AdvancedMERTools
 
         public List<InteractablePickup> InteractablePickups = new List<InteractablePickup> { };
 
+        public List<InteractableTeleporter> InteractableTPs = new List<InteractableTeleporter> { };
+
+        public List<CustomCollider> CustomColliders = new List<CustomCollider> { };
+
         public List<DummyDoor> dummyDoors = new List<DummyDoor> { };
+
+        public List<DummyGate> dummyGates = new List<DummyGate> { };
+
+        public Dictionary<Type, RandomExecutionModule> TypeSingletonPair = new Dictionary<Type, RandomExecutionModule> { };
 
         public override void OnEnabled()
         {
             Singleton = this;
             manager = new EventManager();
-            Harmony harmony = new Harmony("AMER");
+            Harmony harmony = new Harmony("AMERT");
             harmony.PatchAll();
 
             Register();
@@ -68,8 +85,11 @@ namespace AdvancedMERTools
             //Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
-            Exiled.Events.Handlers.Player.SearchingPickup += new CustomEventHandler<Exiled.Events.EventArgs.Player.SearchingPickupEventArgs>(manager.OnItemPicked);
+            Exiled.Events.Handlers.Player.SearchingPickup += manager.OnItemSearching;
+            Exiled.Events.Handlers.Player.ItemAdded += manager.OnItemPicked;
             Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
+            Exiled.Events.Handlers.Player.Joined += manager.OnJoined;
+            MapEditorReborn.Events.Handlers.Teleport.Teleporting += manager.OnTeleport;
         }
 
         void UnRegister()
@@ -83,8 +103,69 @@ namespace AdvancedMERTools
             //Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
-            Exiled.Events.Handlers.Player.SearchingPickup -= new CustomEventHandler<Exiled.Events.EventArgs.Player.SearchingPickupEventArgs> (manager.OnItemPicked);
+            Exiled.Events.Handlers.Player.SearchingPickup -= manager.OnItemSearching;
+            Exiled.Events.Handlers.Player.ItemAdded -= manager.OnItemPicked;
             Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
+            Exiled.Events.Handlers.Player.Joined -= manager.OnJoined;
+            MapEditorReborn.Events.Handlers.Teleport.Teleporting -= manager.OnTeleport;
+        }
+
+        public static ReferenceHub MakeAudio(out int id)
+        {
+            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(NetworkManager.singleton.playerPrefab);
+            ReferenceHub hub = gameObject.GetComponent<ReferenceHub>();
+            try
+            {
+                hub.roleManager.InitializeNewRole(RoleTypeId.None, RoleChangeReason.None, RoleSpawnFlags.All, null);
+            }
+            catch { }
+            id = new RecyclablePlayerId(true).Value;
+            FakeConnection fakeConnection = new FakeConnection(id);
+            NetworkServer.AddPlayerForConnection(fakeConnection, gameObject);
+            MEC.Timing.CallDelayed(0.25f, () =>
+            {
+                try
+                {
+                    hub.roleManager.ServerSetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.All);
+                }
+                catch { }
+            });
+            return hub;
+        }
+
+        public static void ExecuteCommand(string context)
+        {
+            string[] array = context.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
+            ICommand command1;
+            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out command1))
+            {
+                command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
+            }
+        }
+    }
+
+    public class FakeConnection : NetworkConnectionToClient
+    {
+        public FakeConnection(int connectionId) : base(connectionId)
+        {
+
+        }
+
+        public override string address
+        {
+            get
+            {
+                return "localhost";
+            }
+        }
+
+        public override void Send(ArraySegment<byte> segment, int channelId = 0)
+        {
+            base.Send(segment, channelId);
+        }
+        public override void Disconnect()
+        {
+            base.Disconnect();
         }
     }
 
@@ -98,40 +179,14 @@ namespace AdvancedMERTools
         }
     }
 
-    [HarmonyPatch(typeof(DoorObject), nameof(DoorObject.Init))]
-    public class DoorSpawnPatcher
-    {
-        static void Prefix(DoorObject __instance)
-        {
-            if (AdvancedMERTools.Singleton.Config.AutoRun && __instance.gameObject.TryGetComponent(out Interactables.Interobjects.BasicDoor basicDoor) && basicDoor.Rooms.Length == 0)
-            {
-                string str = "DoorLCZ";
-                if (__instance.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
-                if (__instance.gameObject.name.Contains("EZ")) str = "DoorEZ";
-                SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation);
-                DummyDoor dummy = @object.gameObject.AddComponent<DummyDoor>();
-                AdvancedMERTools.Singleton.dummyDoors.Add(dummy);
-                dummy.RealDoor = Door.Get(basicDoor);
-            }
-        }
-    }
-
-    //[HarmonyPatch(typeof(MapEditorReborn.API.Features.MapUtils), nameof(MapEditorReborn.API.Features.MapUtils.SaveMap))]
-    //public class MapSavePathcer
-    //{
-    //    static void Prefix()
-    //    {
-    //        AdvancedMERTools.Singleton.dummyDoors.ForEach(x => 
-    //        {
-    //            UnityEngine.GameObject.Destroy(x.gameObject);
-    //        });
-    //        AdvancedMERTools.Singleton.dummyDoors.Clear();
-    //    }
-    //}
-
     public class EventManager
     {
         Config config = AdvancedMERTools.Singleton.Config;
+
+        public void OnJoined(Exiled.Events.EventArgs.Player.JoinedEventArgs ev)
+        {
+            //identities.ForEach(x => x.gameObject.SetActive(false));
+        }
 
         public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
         {
@@ -145,35 +200,59 @@ namespace AdvancedMERTools
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
-            foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
-            {
-                try
-                {
-                    health.OnGrenadeExplode(ev);
-                }
-                catch (NullReferenceException _)
-                {
-                    continue;
-                }
-            }
-            //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
+            //foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
+            //{
+            //    try
+            //    {
+            //        health.OnGrenadeExplode(ev);
+            //    }
+            //    catch (NullReferenceException _)
+            //    {
+            //        continue;
+            //    }
+            //}
+            AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
 
-        public void OnItemPicked(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
+        public void OnItemSearching(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
         {
-            List<InteractablePickup> list = new List<InteractablePickup> { };
-            foreach (InteractablePickup pickup in AdvancedMERTools.Singleton.InteractablePickups)
+            List<InteractablePickup> list = AdvancedMERTools.Singleton.InteractablePickups.FindAll(x => x.Pickup == ev.Pickup);
+            List<Pickup> removeList = new List<Pickup> { };
+            foreach (InteractablePickup interactable in list)
             {
-                if (pickup != null)
+                if (interactable.Base.InvokeType.HasFlag(InvokeType.Searching))
                 {
-                    pickup.OnInteracted(ev, out bool remove);
-                    if (remove)
+                    interactable.RunProcess(ev.Player, ev.Pickup, out bool Remove);
+                    if (interactable.Base.CancelActionWhenActive)
                     {
-                        list.Add(pickup);
+                        ev.IsAllowed = false;
+                    }
+                    if (Remove && !removeList.Contains(interactable.Pickup))
+                    {
+                        removeList.Add(interactable.Pickup);
                     }
                 }
             }
-            list.ForEach(x => { x.Pickup.Destroy(); AdvancedMERTools.Singleton.InteractablePickups.Remove(x); });
+            removeList.ForEach(x => x.Destroy());
+            AdvancedMERTools.Singleton.dummyGates.ForEach(x => x.OnPickingUp(ev));
+        }
+
+        public void OnItemPicked(Exiled.Events.EventArgs.Player.ItemAddedEventArgs ev)
+        {
+            List<InteractablePickup> list = AdvancedMERTools.Singleton.InteractablePickups.FindAll(x => x.Pickup == ev.Pickup);
+            List<Pickup> removeList = new List<Pickup> { };
+            foreach (InteractablePickup interactable in list)
+            {
+                if (interactable.Base.InvokeType.HasFlag(InvokeType.Picked))
+                {
+                    interactable.RunProcess(ev.Player, ev.Pickup, out bool Remove);
+                    if (Remove && !removeList.Contains(interactable.Pickup))
+                    {
+                        removeList.Add(interactable.Pickup);
+                    }
+                }
+            }
+            removeList.ForEach(x => x.Destroy());
         }
 
         //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
@@ -210,7 +289,7 @@ namespace AdvancedMERTools
                             str = "DoorEZ";
                             break;
                     }
-                    SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, ev.NewMap.Doors[i].Position, Quaternion.Euler(ev.NewMap.Doors[i].Rotation));
+                    SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, ev.NewMap.Doors[i].Position, Quaternion.Euler(ev.NewMap.Doors[i].Rotation), isStatic: false);
                     DummyDoor door = @object.gameObject.AddComponent<DummyDoor>();
                     door.door = ev.NewMap.Doors[i];
                     AdvancedMERTools.Singleton.dummyDoors.Add(door);
@@ -218,28 +297,38 @@ namespace AdvancedMERTools
             }
         }
 
+        public void OnTeleport(MapEditorReborn.Events.EventArgs.TeleportingEventArgs ev)
+        {
+            List<InteractableTeleporter> ITO = AdvancedMERTools.Singleton.InteractableTPs.FindAll(x => (x.TO == ev.EntranceTeleport && x.Base.InvokeType.HasFlag(TeleportInvokeType.Enter))
+            || (x.TO == ev.ExitTeleport && x.Base.InvokeType.HasFlag(TeleportInvokeType.Exit)));
+            if (ITO.Count != 0 && ev.Player != null)
+            {
+                ITO.ForEach(x => x.RunProcess(ev.Player));
+            }
+        }
+
         public void OnSchematicLoad(MapEditorReborn.Events.EventArgs.SchematicSpawnedEventArgs ev)
         {
-            string path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-HealthObjects.json");
-            if (File.Exists(path))
+            if (ev.Name.Equals("Gate", StringComparison.InvariantCultureIgnoreCase))
             {
-                List<HealthObjectDTO> healthObjectDTOs = JsonSerializer.Deserialize<List<HealthObjectDTO>>(File.ReadAllText(path));
-                foreach (HealthObjectDTO dTO in healthObjectDTOs)
-                {
-                    Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
-                    HealthObject health = target.gameObject.AddComponent<HealthObject>();
-                    health.Base = dTO;
-                }
+                ev.Schematic.gameObject.AddComponent<DummyGate>();
             }
-            path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + "-Pickups.json");
+            DataLoad<HODTO, HealthObject>("HealthObjects", ev);
+            DataLoad<IPDTO, InteractablePickup>("Pickups", ev);
+            DataLoad<CCDTO, CustomCollider>("Colliders", ev);
+        }
+
+        public void DataLoad<Tdto, Tclass>(string name, MapEditorReborn.Events.EventArgs.SchematicSpawnedEventArgs ev) where Tdto : AMERTDTO where Tclass : AMERTInteractable, new()
+        {
+            string path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + $"-{name}.json");
             if (File.Exists(path))
             {
-                List<IPDTO> healthObjectDTOs = JsonSerializer.Deserialize<List<IPDTO>>(File.ReadAllText(path));
-                foreach (IPDTO dTO in healthObjectDTOs)
+                List<Tdto> ts = JsonSerializer.Deserialize<List<Tdto>>(File.ReadAllText(path));
+                foreach (Tdto dto in ts)
                 {
-                    Transform target = FindObjectWithPath(ev.Schematic.transform, dTO.ObjectId);
-                    InteractablePickup health = target.gameObject.AddComponent<InteractablePickup>();
-                    health.Base = dTO;
+                    Transform target = FindObjectWithPath(ev.Schematic.transform, dto.ObjectId);
+                    Tclass tclass = target.gameObject.AddComponent<Tclass>();
+                    tclass.Base = dto;
                 }
             }
         }
@@ -264,13 +353,28 @@ namespace AdvancedMERTools
 
         public void OnGen()
         {
+            AdvancedMERTools.Singleton.healthObjects.Clear();
             AdvancedMERTools.Singleton.InteractablePickups.Clear();
             AdvancedMERTools.Singleton.dummyDoors.Clear();
+            AdvancedMERTools.Singleton.dummyGates.Clear();
+            AdvancedMERTools.Singleton.InteractableTPs.Clear();
+            AdvancedMERTools.Singleton.CustomColliders.Clear();
             //if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
             //{
             //    AutoRun();
             //}
+            //foreach (NetworkIdentity identity in GameObject.FindObjectsOfType<NetworkIdentity>())
+            //{
+            //    if (identity.name.Equals("All"))
+            //    {
+            //        //ServerConsole.AddLog(identity.transform.parent.gameObject.name);
+            //        //identities.Add(identity);
+            //        NetworkIdentity.Destroy(identity.transform.parent.gameObject);
+            //    }
+            //}
         }
+
+        List<NetworkIdentity> identities = new List<NetworkIdentity> { };
 
         /*public void OnRound()
         {
