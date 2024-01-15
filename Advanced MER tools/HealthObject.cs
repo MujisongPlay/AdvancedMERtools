@@ -11,67 +11,47 @@ using NaughtyAttributes;
 
 public class HealthObject : MonoBehaviour
 {
-    public float Health = 0;
-    public int ArmorEfficient = 0;
-    public DeadType DeadType = DeadType.Disappear;
-    public float DeadActionDelay = 0f;
-    [BoxGroup("Explode")]
+    public float Health;
+    public int ArmorEfficient;
+    public DeadType DeadType;
+    public float DeadActionDelay;
     [ShowIf("DeadType", DeadType.Explode)]
-    public bool ExplosionFriendlyKill = false;
+    [ReorderableList]
+    public List<ExplodeModule> ExplodeModules;
     [ShowIf("KillCheck")]
-    public bool DoNotRemoveAfterDeath = false;
-    [BoxGroup("Animation")]
+    public bool DoNotRemoveAfterDeath;
     [ShowIf("DeadType", DeadType.PlayAnimation)]
     [ReorderableList]
-    public List<AnimationModule> AnimationModules = new List<AnimationModule> { };
-    [BoxGroup("Warhead")]
+    public List<AnimationModule> AnimationModules;
     [ShowIf("DeadType", DeadType.Warhead)]
-    public WarheadActionType warheadAction = WarheadActionType.Start;
-    [BoxGroup("ResetHP")]
+    public WarheadActionType warheadAction;
     [ShowIf("DeadType", DeadType.ResetHP)]
-    public float ResetHPTo = 0f;
+    public float ResetHPTo;
     [ReorderableList]
-    public List<WhitelistWeapon> whitelistWeapons = new List<WhitelistWeapon> { };
-    [BoxGroup("Message")]
-    [ShowIf("DeadType", DeadType.SendMessage)]
-    public MessageType MessageType = MessageType.BroadCast;
-    [BoxGroup("Message")]
+    public List<WhitelistWeapon> whitelistWeapons;
     [ShowIf("DeadType", DeadType.SendMessage)]
     [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
-    public string MessageContent = "";
-    [BoxGroup("Message")]
-    [ShowIf("MessageShowCheck")]
-    public SendType SendType = SendType.Killer;
-    [BoxGroup("Drop items")]
+    [ReorderableList]
+    public List<MessageModule> MessageModules;
     [ShowIf("DeadType", DeadType.DropItems)]
     [ReorderableList]
-    public List<DropItem> DropItems = new List<DropItem> { };
-    [BoxGroup("Command")]
+    public List<DropItem> DropItems;
     [ShowIf("DeadType", DeadType.SendCommand)]
     [ReorderableList]
     [Label("There's many formats you can see when you put on curser to 'command context'")]
-    public List<Commanding> Commandings = new List<Commanding> { };
+    public List<Commanding> Commandings;
+    [ShowIf("DeadType", DeadType.GiveEffect)]
+    [ReorderableList]
+    public List<EffectGivingModule> effectGivingModules;
 
     public bool KillCheck()
     {
         return DeadType == DeadType.Disappear || DeadType == DeadType.Explode || DeadType == DeadType.DynamicDisappearing || DeadType == DeadType.SendCommand;
     }
-
-    public bool MessageShowCheck()
-    {
-        return DeadType == DeadType.SendMessage && MessageType != MessageType.Cassie;
-    }
 }
 
 [Serializable]
-public class WhitelistWeapon
-{
-    public ItemType ItemType;
-    public uint CustomItemId;
-}
-
-[Serializable]
-public class HealthObjectDTO
+public class HODTO
 {
     public float Health;
     public int ArmorEfficient;
@@ -82,118 +62,12 @@ public class HealthObjectDTO
     public List<AnimationDTO> animationDTOs;
     public List<WhitelistWeapon> whitelistWeapons;
     public WarheadActionType warheadActionType;
-    public string MessageContent;
-    public MessageType MessageType;
-    public SendType SendType;
+    public List<MessageModule> messageModules;
     public List<DropItem> dropItems;
     public bool DoNotDestroyAfterDeath;
     public List<Commanding> commandings;
-    public bool FFon;
-}
-
-[Serializable]
-public class AnimationDTO
-{
-    public string Animator;
-    public string Animation;
-    public AnimationType AnimationType;
-    public float Chance;
-    public bool Force;
-}
-
-[Flags]
-[Serializable]
-public enum DeadType
-{
-    Disappear = 1,
-    GetRigidbody = 2,
-    DynamicDisappearing = 4,
-    Explode = 8,
-    ResetHP = 16,
-    PlayAnimation = 32,
-    Warhead = 64,
-    SendMessage = 128,
-    DropItems = 256,
-    SendCommand = 512
-}
-
-[Serializable]
-public class AnimationModule
-{
-    public GameObject Animator;
-    public string AnimationName;
-    public AnimationType AnimationType;
-    public float ChanceWeight;
-    public bool ForceExecute;
-}
-
-[Flags]
-[Serializable]
-public enum WarheadActionType
-{
-    Start = 1,
-    Stop = 2,
-    Lock = 4,
-    UnLock = 8,
-    Disable = 16,
-    Enable = 32
-}
-
-[Serializable]
-public enum AnimationType
-{
-    Start,
-    Stop
-}
-
-[Serializable]
-public enum MessageType
-{
-    Cassie,
-    BroadCast,
-    Hint
-}
-
-[Serializable]
-public enum SendType
-{
-    Killer,
-    All
-}
-
-[Serializable]
-public class DropItem
-{
-    public ItemType ItemType;
-    public uint CustomItemId;
-    public int Count;
-    public float Chance;
-    public bool ForceSpawn;
-}
-
-[Serializable]
-public class Commanding
-{
-    [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
-    public string CommandContext;
-    public float Chance;
-    public bool ForceExecute;
-    //public CommandType CommandType;
-    //public ExecutorType ExecutorType;
-}
-
-[Serializable]
-public enum CommandType
-{
-    RemoteAdmin,
-    ClientConsole
-}
-
-[Serializable]
-public enum ExecutorType
-{
-    Attacker,
-    LocalAdmin
+    public List<ExplodeModule> ExplodeModules;
+    public List<EffectGivingModule> effectGivingModules;
 }
 
 public class HealthObjectCompiler : MonoBehaviour
@@ -225,16 +99,16 @@ public class HealthObjectCompiler : MonoBehaviour
 
         Directory.CreateDirectory(schematicDirectoryPath);
 
-        List<HealthObjectDTO> healthObjects = new List<HealthObjectDTO> { };
+        List<HODTO> healthObjects = new List<HODTO> { };
 
         foreach (HealthObject health in schematic.transform.GetComponentsInChildren<HealthObject>())
         {
-            HealthObjectDTO dTO = new HealthObjectDTO
+            HODTO dTO = new HODTO
             {
                 Health = health.Health,
                 ArmorEfficient = health.ArmorEfficient,
                 DeadType = health.DeadType,
-                ObjectId = FindPath(health.transform),
+                ObjectId = PublicFunctions.FindPath(health.transform),
                 whitelistWeapons = health.whitelistWeapons,
                 DeadDelay = health.DeadActionDelay,
                 DoNotDestroyAfterDeath = health.DoNotRemoveAfterDeath
@@ -246,7 +120,7 @@ public class HealthObjectCompiler : MonoBehaviour
                     switch (type)
                     {
                         case DeadType.Explode:
-                            dTO.FFon = health.ExplosionFriendlyKill;
+                            dTO.ExplodeModules = health.ExplodeModules;
                             break;
                         case DeadType.PlayAnimation:
                             dTO.animationDTOs = new List<AnimationDTO> { };
@@ -254,11 +128,11 @@ public class HealthObjectCompiler : MonoBehaviour
                             {
                                 dTO.animationDTOs.Add(new AnimationDTO
                                 {
-                                    Animator = FindPath(module.Animator.transform),
+                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
                                     Animation = module.AnimationName,
                                     AnimationType = module.AnimationType,
-                                    Force = module.ForceExecute,
-                                    Chance = module.ChanceWeight
+                                    ForceExecute = module.ForceExecute,
+                                    ChanceWeight = module.ChanceWeight
                                 });
                             }
                             break;
@@ -272,12 +146,13 @@ public class HealthObjectCompiler : MonoBehaviour
                             dTO.dropItems = health.DropItems;
                             break;
                         case DeadType.SendMessage:
-                            dTO.MessageType = health.MessageType;
-                            dTO.MessageContent = health.MessageContent;
-                            dTO.SendType = health.SendType;
+                            dTO.messageModules = health.MessageModules;
                             break;
                         case DeadType.SendCommand:
                             dTO.commandings = health.Commandings;
+                            break;
+                        case DeadType.GiveEffect:
+                            dTO.effectGivingModules = health.effectGivingModules;
                             break;
                     }
                 }
@@ -290,28 +165,5 @@ public class HealthObjectCompiler : MonoBehaviour
 
         File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-HealthObjects.json"), serializedData);
         Debug.Log("Successfully Imported HealthObjects.");
-    }
-
-    public static string FindPath(Transform transform)
-    {
-        string path = "";
-        if (transform.TryGetComponent<Schematic>(out _))
-        {
-            return path;
-        }
-        while (true)
-        {
-            for (int i = 0; i < transform.parent.childCount; i++)
-            {
-                if (transform.parent.GetChild(i) == transform)
-                {
-                    path += i.ToString();
-                }
-            }
-            transform = transform.parent;
-            if (transform.TryGetComponent<Schematic>(out _)) break;
-            path += " ";
-        }
-        return path;
     }
 }
