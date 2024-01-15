@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,20 +13,23 @@ using RemoteAdmin;
 using CommandSystem.Commands;
 using CommandSystem;
 using MapEditorReborn.API.Features.Objects;
+using InventorySystem.Items.Firearms.Modules;
+using InventorySystem.Items.ThrowableProjectiles;
 
 namespace AdvancedMERTools
 {
-    public class HealthObject : MonoBehaviour
+    public class HealthObject : AMERTInteractable
     {
         private void Start()
         {
+            this.Base = base.Base as HODTO;
             Health = Base.Health;
             AdvancedMERTools.Singleton.healthObjects.Add(this);
         }
 
         public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
         {
-            if (!ev.CanHurt || ev.Player == null || !IsAlive) return;
+            if (!ev.CanHurt || ev.Player == null || !IsAlive || !(ev.Player.CurrentItem is Firearm)) return;
             if (Base.whitelistWeapons.Count != 0)
             {
                 if (CustomItem.TryGet(ev.Player.CurrentItem, out CustomItem custom))
@@ -39,6 +43,14 @@ namespace AdvancedMERTools
             }
             Firearm firearm = ev.Player.CurrentItem as Firearm;
             float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
+            if (firearm.Type == ItemType.GunShotgun && firearm.Base is InventorySystem.Items.Firearms.Shotgun)
+            {
+                //damage /= (firearm.Base.ActionModule as PumpAction).LastFiredAmount * 8;
+                //FieldInfo info = typeof(BuckshotHitreg).GetField("_buckshotSettingsProvider", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+                //damage /= ((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
+                PropertyInfo info = typeof(BuckshotHitreg).GetProperty("CurBuckshotSettings", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+                damage /= (float)((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
+            }
             Health -= damage;
             Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
             CheckDead(ev.Player, damage);
@@ -51,8 +63,10 @@ namespace AdvancedMERTools
             if (ev.Projectile.Type == ItemType.GrenadeHE)
             {
                 float Dis = Vector3.Distance(this.transform.position, ev.Position);
-                float damage = Dis < 4 ? 300f + Mathf.Max(0f, 30f * (Mathf.Pow(Dis, 2f) - Mathf.Pow(2f, Dis))) : 2160 / Dis - 240f;
+                FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+                float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
                 damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
+                ServerConsole.AddLog(damage.ToString());
                 if (ev.Player != null) Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
                 Health -= damage;
                 CheckDead(ev.Player, damage);
@@ -63,7 +77,7 @@ namespace AdvancedMERTools
         {
             if (Health <= 0)
             {
-                HealthObjectDTO clone = new HealthObjectDTO
+                HODTO clone = new HODTO
                 {
                     Health = this.Base.Health,
                     ArmorEfficient = this.Base.ArmorEfficient,
@@ -81,7 +95,7 @@ namespace AdvancedMERTools
                             switch (type)
                             {
                                 case DeadType.Disappear:
-                                    Destroy();
+                                    Destroy(this.gameObject, 0.1f);
                                     break;
                                 case DeadType.GetRigidbody:
                                     this.gameObject.AddComponent<Rigidbody>();
@@ -89,8 +103,7 @@ namespace AdvancedMERTools
                                 case DeadType.DynamicDisappearing:
                                     break;
                                 case DeadType.Explode:
-                                    Utils.ExplosionUtils.ServerExplode(this.transform.position, (Base.FFon ? Server.Host : player).Footprint);
-                                    Destroy();
+                                    ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
                                     break;
                                 case DeadType.ResetHP:
                                     Health = Base.ResetHPTo == 0 ? Base.Health : Base.ResetHPTo;
@@ -99,55 +112,13 @@ namespace AdvancedMERTools
                                 case DeadType.PlayAnimation:
                                     if (modules.Count == 0)
                                     {
-                                        foreach (AnimationDTO dTO in Base.animationDTOs)
-                                        {
-                                            if (!EventManager.FindObjectWithPath(this.GetComponentInParent<SchematicObject>().transform, dTO.Animator).TryGetComponent(out Animator animator))
-                                            {
-                                                ServerConsole.AddLog("Cannot find appopriate animator!");
-                                                continue;
-                                            }
-                                            modules.Add(new AnimationModule
-                                            {
-                                                Animator = animator,
-                                                AnimationName = dTO.Animation,
-                                                AnimationType = dTO.AnimationType,
-                                                ChanceWeight = dTO.Chance,
-                                                ForceExecute = dTO.Force
-                                            });
-                                        }
+                                        modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
                                         if (modules.Count == 0)
                                         {
                                             break;
                                         }
                                     }
-                                    float Chance = 0f;
-                                    modules.ForEach(x => Chance += x.ChanceWeight);
-                                    Chance = UnityEngine.Random.Range(0, Chance);
-                                    foreach (AnimationModule module in modules)
-                                    {
-                                        if (module.Animator == null)
-                                            continue;
-                                        if (module.ForceExecute)
-                                        {
-                                            goto IL_01;
-                                        }
-                                        if (Chance <= 0)
-                                            continue;
-                                        Chance -= module.ChanceWeight;
-                                        if (Chance <= 0)
-                                        {
-                                            goto IL_01;
-                                        }
-                                        continue;
-                                    IL_01:
-                                        if (module.AnimationType == AnimationType.Start)
-                                        {
-                                            module.Animator.Play(module.AnimationName);
-                                            module.Animator.speed = 1f;
-                                        }
-                                        else
-                                            module.Animator.speed = 0f;
-                                    }
+                                    AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
                                     break;
                                 case DeadType.Warhead:
                                     foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
@@ -179,69 +150,16 @@ namespace AdvancedMERTools
                                     }
                                     break;
                                 case DeadType.SendMessage:
-                                    Player[] players = Player.List.ToArray();
-                                    if (Base.SendType == SendType.Killer)
-                                    {
-                                        players = new Player[] { player };
-                                    }
-                                    switch (Base.MessageType)
-                                    {
-                                        case MessageType.Cassie:
-                                            Cassie.Message(ApplyFormat(Base.MessageContent, player, damage), false, true, true);
-                                            break;
-                                        case MessageType.BroadCast:
-                                            players.ForEach(x => x.Broadcast(3, ApplyFormat(Base.MessageContent, player, damage)));
-                                            break;
-                                        case MessageType.Hint:
-                                            players.ForEach(x => x.ShowHint(ApplyFormat(Base.MessageContent, player, damage)));
-                                            break;
-                                    }
+                                    MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.messageModules), Formatter, player, this.transform, damage);
                                     break;
                                 case DeadType.DropItems:
-                                    if (Base.dropItems.Count == 0)
-                                    {
-                                        return;
-                                    }
-                                    Chance = 0;
-                                    Base.dropItems.ForEach(x => Chance += x.Chance);
-                                    Chance = UnityEngine.Random.Range(0f, Chance);
-                                    foreach (DropItem item in Base.dropItems)
-                                    {
-                                        if (item.ForceSpawn)
-                                        {
-                                            CreateItem(item);
-                                            continue;
-                                        }
-                                        if (Chance <= 0) continue;
-                                        Chance -= item.Chance;
-                                        if (Chance <= 0 && item.Count > 0)
-                                        {
-                                            CreateItem(item);
-                                        }
-                                    }
+                                    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
                                     break;
                                 case DeadType.SendCommand:
-                                    if (Base.commandings.Count == 0)
-                                    {
-                                        return;
-                                    }
-                                    Chance = 0;
-                                    Base.commandings.ForEach(x => Chance += x.Chance);
-                                    Chance = UnityEngine.Random.Range(0f, Chance);
-                                    foreach (Commanding commanding in Base.commandings)
-                                    {
-                                        if (commanding.ForceExecute && commanding.CommandContext != "")
-                                        {
-                                            ExecuteCommand(commanding, player, damage);
-                                            continue;
-                                        }
-                                        if (Chance <= 0) continue;
-                                        Chance -= commanding.Chance;
-                                        if (Chance <= 0 && commanding.CommandContext != "")
-                                        {
-                                            ExecuteCommand(commanding, player, damage);
-                                        }
-                                    }
+                                    CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, this.transform, damage);
+                                    break;
+                                case DeadType.GiveEffect:
+                                    EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
                                     break;
                             }
                         }
@@ -250,78 +168,30 @@ namespace AdvancedMERTools
             }
         }
 
-        void CreateItem(DropItem item)
+        static readonly Dictionary<string, Func<object[], string>> Formatter = new Dictionary<string, Func<object[], string>>
         {
-            if (item.Count == 0) return;
-            for (int i = 0; i < item.Count; i++)
-            {
-                if (item.CustomItemId != 0)
-                {
-                    if (CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
-                    {
-                        custom.Spawn(this.transform.position);
-                    }
-                }
-                else
-                {
-                    Item.Create(item.ItemType).CreatePickup(this.transform.position);
-                }
-            }
-        }
-
-        void ExecuteCommand(Commanding commanding, Player player, float damage)
-        {
-            string command = ApplyFormat(commanding.CommandContext, player, damage);
-            string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
-            ICommand command1;
-            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out command1) /*&& commanding.CommandType == CommandType.RemoteAdmin*/)
-            {
-                //if (commanding.ExecutorType == ExecutorType.Attacker)
-                //    command1.Execute(array.Segment(0), player.Sender, out _);
-                //else
-                    command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
-            }
-            //if (commanding.CommandType == CommandType.ClientConsole)
-            //{
-            //    if (commanding.ExecutorType == ExecutorType.Attacker)
-            //        Server.RunCommand(command, player.Sender);
-            //    else
-            //        Server.RunCommand(command, ServerConsole.Scs);
-            //}
-        }
-
-        string ApplyFormat(string context, Player player, float damage)
-        {
-            try
-            {
-                context = context.Replace("{attacker_i}", player.Id.ToString())
-                .Replace("{attacker_name}", player.Nickname)
-                .Replace("{a_role}", player.Role.Type.ToString())
-                .Replace("{damage}", damage.ToString());
-                Vector3 vector3 = player.Position;
-                context = context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-                if (player.CurrentRoom != null)
-                    context = context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString())
-                    .Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
-                vector3 = this.transform.position;
-                context = context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-                Room room = Room.Get(this.transform.position);
-                if (room != null)
-                    context = context.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString())
-                    .Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
-                if (player.CurrentItem == null)
-                    context = context.Replace("{a_item}", "null");
-                else
-                    context = context.Replace("{a_item}", player.CurrentItem.Type.ToString());
-            }
-            catch (Exception) { }
-            return context;
-        }
+            { "{p_i}", vs => (vs[0] as Player).Id.ToString() },
+            { "{p_name}", vs => (vs[0] as Player).Nickname.ToString() },
+            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{p_room}", vs => (vs[0] as Player).CurrentRoom.RoomName.ToString() },
+            { "{p_zone}", vs => (vs[0] as Player).Zone.ToString() },
+            { "{p_role}", vs => (vs[0] as Player).Role.Type.ToString() },
+            { "{p_item}", vs => (vs[0] as Player).CurrentItem.Type.ToString() },
+            { "{o_pos}", vs => { Vector3 pos = (vs[1] as Transform).position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{o_room}", vs => Room.Get((vs[1] as Transform).position).RoomName.ToString() },
+            { "{o_zone}", vs => Room.Get((vs[1] as Transform).position).Zone.ToString() },
+            { "{damage}", vs => (vs[2] as float?).ToString() }
+        };
 
         void Update()
         {
-            if (Health <= 0 && this.Base.DeadType == DeadType.DynamicDisappearing && !AnimationEnded)
+            if (Health <= 0 && this.Base.DeadType.HasFlag(DeadType.DynamicDisappearing) && !AnimationEnded)
             {
+                this.transform.localScale = Vector3.Lerp(this.transform.localScale, Vector3.zero, Time.deltaTime);
+                if (this.transform.localScale.magnitude <= 0.1f)
+                {
+                    Destroy();
+                }
                 //if (Base.AnimationCurve != null)
                 //{
                 //    if (Base.AnimationCurve.keys.Last().time < animationkey)
@@ -335,11 +205,6 @@ namespace AdvancedMERTools
                 //}
                 //else
                 //{
-                    this.transform.localScale = Vector3.Lerp(this.transform.localScale, Vector3.zero, Time.deltaTime);
-                    if (this.transform.localScale.magnitude <= 0.1f)
-                    {
-                        Destroy();
-                    }
                 //}
                 //animationkey += Time.deltaTime;
             }
@@ -349,7 +214,6 @@ namespace AdvancedMERTools
         {
             AnimationEnded = true;
             if (Base.DoNotDestroyAfterDeath) return;
-            AdvancedMERTools.Singleton.healthObjects.Remove(this);
             Destroy(this.gameObject);
         }
 
@@ -366,7 +230,7 @@ namespace AdvancedMERTools
 
         public bool IsAlive = true;
 
-        public HealthObjectDTO Base;
+        public new HODTO Base;
 
         public List<AnimationModule> modules = new List<AnimationModule> { };
     }
