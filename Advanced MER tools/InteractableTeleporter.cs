@@ -14,9 +14,9 @@ public class InteractableTeleporter : MonoBehaviour
     public int index;
     public TeleportInvokeType TeleportInvokeType;
     public IPActionType ActionType;
-    //[ShowIf("ActionType", IPActionType.PlayAnimation)]
-    //[ReorderableList]
-    //public List<AnimationModule> AnimationModules;
+    [ShowIf("ActionType", IPActionType.PlayAnimation)]
+    [ReorderableList]
+    public List<AnimationModule> AnimationModules;
     [ShowIf("ActionType", IPActionType.Explode)]
     [ReorderableList]
     public List<ExplodeModule> ExplodeModules;
@@ -44,11 +44,11 @@ public class InteractableTeleporter : MonoBehaviour
             flag = true;
             ActionType -= IPActionType.UpgradeItem;
         }
-        if (ActionType.HasFlag(IPActionType.PlayAnimation))
-        {
-            flag = true;
-            ActionType -= IPActionType.PlayAnimation;
-        }
+        //if (ActionType.HasFlag(IPActionType.PlayAnimation))
+        //{
+        //    flag = true;
+        //    ActionType -= IPActionType.PlayAnimation;
+        //}
         if (ActionType.HasFlag(IPActionType.DropItems))
         {
             flag = true;
@@ -65,7 +65,7 @@ public class ITDTO
     public TeleportInvokeType InvokeType;
     public IPActionType ActionType;
     public string ObjectId;
-    //public List<AnimationDTO> animationDTOs;
+    public List<AnimationDTO> animationDTOs;
     public WarheadActionType warheadActionType;
     public List<MessageModule> MessageModules;
     //public List<DropItem> dropItems;
@@ -113,20 +113,20 @@ public class InteractableTeleporterCompiler
                         //case IPActionType.DropItems:
                         //    DTO.dropItems = ip.DropItems;
                         //    break;
-                        //case IPActionType.PlayAnimation:
-                        //    DTO.animationDTOs = new List<AnimationDTO> { };
-                        //    foreach (AnimationModule module in ip.AnimationModules)
-                        //    {
-                        //        DTO.animationDTOs.Add(new AnimationDTO
-                        //        {
-                        //            Animator = PublicFunctions.FindPath(module.Animator.transform),
-                        //            Animation = module.AnimationName,
-                        //            AnimationType = module.AnimationType,
-                        //            ForceExecute = module.ForceExecute,
-                        //            ChanceWeight = module.ChanceWeight
-                        //        });
-                        //    }
-                        //    break;
+                        case IPActionType.PlayAnimation:
+                            DTO.animationDTOs = new List<AnimationDTO> { };
+                            foreach (AnimationModule module in ip.AnimationModules)
+                            {
+                                DTO.animationDTOs.Add(new AnimationDTO
+                                {
+                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
+                                    Animation = module.AnimationName,
+                                    AnimationType = module.AnimationType,
+                                    ForceExecute = module.ForceExecute,
+                                    ChanceWeight = module.ChanceWeight
+                                });
+                            }
+                            break;
                         case IPActionType.Warhead:
                             DTO.warheadActionType = ip.warheadAction;
                             break;
