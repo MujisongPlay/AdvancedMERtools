@@ -17,10 +17,11 @@ using Exiled.CustomItems.API.Features;
 
 namespace AdvancedMERTools
 {
-    public class InteractablePickup : MonoBehaviour
+    public class InteractablePickup : AMERTInteractable
     {
         void Start()
         {
+            this.Base = base.Base as IPDTO;
             Pickup = Pickup.Get(this.gameObject);
             if (Pickup != null)
             {
@@ -32,85 +33,37 @@ namespace AdvancedMERTools
             }
         }
 
-        public void Destroy()
-        {
-            AdvancedMERTools.Singleton.InteractablePickups.Remove(this);
-            Destroy(this);
-        }
-
-        public void OnInteracted(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev, out bool Remove)
+        public void RunProcess(Player player, Pickup pickup, out bool Remove)
         {
             Remove = false;
-            if (ev.Pickup != this.Pickup)
+            if (pickup != this.Pickup)
             {
                 return;
             }
-            foreach (ActionType type in Enum.GetValues(typeof(ActionType)))
+            foreach (IPActionType type in Enum.GetValues(typeof(IPActionType)))
             {
                 if (Base.ActionType.HasFlag(type))
                 {
                     switch (type)
                     {
-                        case ActionType.Disappear:
+                        case IPActionType.Disappear:
                             Remove = true;
                             break;
-                        case ActionType.Explode:
-                            Utils.ExplosionUtils.ServerExplode(ev.Pickup.Position, (Base.FFon ? Server.Host : ev.Player).Footprint);
+                        case IPActionType.Explode:
+                            ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
                             break;
-                        case ActionType.PlayAnimation:
+                        case IPActionType.PlayAnimation:
                             if (modules.Count == 0)
                             {
-                                foreach (AnimationDTO dTO in Base.animationDTOs)
-                                {
-                                    if (!EventManager.FindObjectWithPath(this.GetComponentInParent<SchematicObject>().transform, dTO.Animator).TryGetComponent(out Animator animator))
-                                    {
-                                        ServerConsole.AddLog("Cannot find appopriate animator!");
-                                        continue;
-                                    }
-                                    modules.Add(new AnimationModule
-                                    {
-                                        Animator = animator,
-                                        AnimationName = dTO.Animation,
-                                        AnimationType = dTO.AnimationType,
-                                        ChanceWeight = dTO.Chance,
-                                        ForceExecute = dTO.Force
-                                    });
-                                }
+                                modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
                                 if (modules.Count == 0)
                                 {
                                     break;
                                 }
                             }
-                            float Chance = 0f;
-                            modules.ForEach(x => Chance += x.ChanceWeight);
-                            Chance = UnityEngine.Random.Range(0, Chance);
-                            foreach (AnimationModule module in modules)
-                            {
-                                if (module.Animator == null)
-                                    continue;
-                                if (module.ForceExecute)
-                                {
-                                    goto IL_01;
-                                }
-                                if (Chance <= 0)
-                                    continue;
-                                Chance -= module.ChanceWeight;
-                                if (Chance <= 0)
-                                {
-                                    goto IL_01;
-                                }
-                                continue;
-                                IL_01:
-                                if (module.AnimationType == AnimationType.Start)
-                                {
-                                    module.Animator.Play(module.AnimationName);
-                                    module.Animator.speed = 1f;
-                                }
-                                else
-                                    module.Animator.speed = 0f;
-                            }
+                            AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
                             break;
-                        case ActionType.Warhead:
+                        case IPActionType.Warhead:
                             foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
                             {
                                 if (Base.warheadActionType.HasFlag(warhead))
@@ -139,73 +92,17 @@ namespace AdvancedMERTools
                                 }
                             }
                             break;
-                        case ActionType.SendMessage:
-                            Player[] players = Player.List.ToArray();
-                            if (Base.SendType == SendType.Killer)
-                            {
-                                players = new Player[] { ev.Player };
-                            }
-                            switch (Base.MessageType)
-                            {
-                                case MessageType.Cassie:
-                                    Cassie.Message(ApplyFormat(Base.MessageContent, ev.Player, ev.Pickup), false, true, true);
-                                    break;
-                                case MessageType.BroadCast:
-                                    players.ForEach(x => x.Broadcast(3, ApplyFormat(Base.MessageContent, ev.Player, ev.Pickup)));
-                                    break;
-                                case MessageType.Hint:
-                                    players.ForEach(x => x.ShowHint(ApplyFormat(Base.MessageContent, ev.Player, ev.Pickup)));
-                                    break;
-                            }
+                        case IPActionType.SendMessage:
+                            MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, player, pickup);
                             break;
-                        case ActionType.DropItems:
-                            if (Base.dropItems.Count == 0)
-                            {
-                                return;
-                            }
-                            Chance = 0;
-                            Base.dropItems.ForEach(x => Chance += x.Chance);
-                            Chance = UnityEngine.Random.Range(0f, Chance);
-                            foreach (DropItem item in Base.dropItems)
-                            {
-                                if (item.ForceSpawn)
-                                {
-                                    CreateItem(item);
-                                    continue;
-                                }
-                                if (Chance <= 0) continue;
-                                Chance -= item.Chance;
-                                if (Chance <= 0 && item.Count > 0)
-                                {
-                                    CreateItem(item);
-                                }
-                            }
+                        case IPActionType.DropItems:
+                            DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
                             break;
-                        case ActionType.SendCommand:
-                            if (Base.commandings.Count == 0)
-                            {
-                                return;
-                            }
-                            Chance = 0;
-                            Base.commandings.ForEach(x => Chance += x.Chance);
-                            Chance = UnityEngine.Random.Range(0f, Chance);
-                            foreach (Commanding commanding in Base.commandings)
-                            {
-                                if (commanding.ForceExecute && commanding.CommandContext != "")
-                                {
-                                    ExecuteCommand(commanding, ev.Player, ev.Pickup);
-                                    continue;
-                                }
-                                if (Chance <= 0) continue;
-                                Chance -= commanding.Chance;
-                                if (Chance <= 0 && commanding.CommandContext != "")
-                                {
-                                    ExecuteCommand(commanding, ev.Player, ev.Pickup);
-                                }
-                            }
+                        case IPActionType.SendCommand:
+                            CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, pickup);
                             break;
-                        case ActionType.UpgradeItem:
-                            if (ev.Player.GameObject.TryGetComponent<Collider>(out Collider col))
+                        case IPActionType.UpgradeItem:
+                            if (player.GameObject.TryGetComponent<Collider>(out Collider col))
                             {
                                 List<int> vs = new List<int> { };
                                 for (int j = 0; j < 5; j++)
@@ -218,81 +115,36 @@ namespace AdvancedMERTools
                                 Scp914.Scp914Upgrader.Upgrade(new Collider[] { col }, Vector3.zero, Scp914.Scp914Mode.Held, (Scp914.Scp914KnobSetting)vs.RandomItem());
                             }
                             break;
+                        case IPActionType.GiveEffect:
+                            EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
+                            break;
                     }
                 }
             }
         }
 
-        void CreateItem(DropItem item)
+        void OnDestroy()
         {
-            if (item.Count == 0) return;
-            for (int i = 0; i < item.Count; i++)
-            {
-                if (item.CustomItemId != 0)
-                {
-                    if (CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
-                    {
-                        custom.Spawn(this.transform.position);
-                    }
-                }
-                else
-                {
-                    Item.Create(item.ItemType).CreatePickup(this.transform.position);
-                }
-            }
+            AdvancedMERTools.Singleton.InteractablePickups.Remove(this);
         }
 
-        void ExecuteCommand(Commanding commanding, Player player, Pickup pickup)
+        static readonly Dictionary<string, Func<object[], string>> Formatter = new Dictionary<string, Func<object[], string>>
         {
-            string command = ApplyFormat(commanding.CommandContext, player, pickup);
-            string[] array = command.Trim().Split(new char[] { ' ' }, 512, StringSplitOptions.RemoveEmptyEntries);
-            ICommand command1;
-            if (CommandProcessor.RemoteAdminCommandHandler.TryGetCommand(array[0], out command1) /*&& commanding.CommandType == CommandType.RemoteAdmin*/)
-            {
-                //if (commanding.ExecutorType == ExecutorType.Attacker)
-                //    command1.Execute(array.Segment(0), player.Sender, out _);
-                //else
-                    command1.Execute(array.Segment(1), ServerConsole.Scs, out _);
-            }
-            //if (commanding.CommandType == CommandType.ClientConsole)
-            //{
-            //    if (commanding.ExecutorType == ExecutorType.Attacker)
-            //        Server.RunCommand(command, player.Sender);
-            //    else
-            //        Server.RunCommand(command, ServerConsole.Scs);
-            //}
-        }
-
-        string ApplyFormat(string context, Player player, Pickup pickup)
-        {
-            try
-            {
-                context = context.Replace("{picker_i}", player.Id.ToString())
-                .Replace("{picker_name}", player.Nickname)
-                .Replace("{a_role}", player.Role.Type.ToString());
-                Vector3 vector3 = player.Position;
-                context = context.Replace("{a_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-                if (player.CurrentRoom != null)
-                    context = context.Replace("{a_room}", player.CurrentRoom.RoomName.ToString())
-                    .Replace("{a_zone}", player.CurrentRoom.Identifier.Zone.ToString());
-                vector3 = pickup.Transform.position;
-                context = context.Replace("{s_pos}", string.Format("{0} {1} {2}", vector3.x, vector3.y, vector3.z));
-                Room room = Room.Get(this.transform.position);
-                if (room != null)
-                    context = context.Replace("{s_room}", Room.Get(this.transform.position).Type.ToString())
-                    .Replace("{s_zone}", Room.Get(this.transform.position).Identifier.Zone.ToString());
-                if (player.CurrentItem == null)
-                    context = context.Replace("{a_item}", "null");
-                else
-                    context = context.Replace("{a_item}", player.CurrentItem.Type.ToString());
-            }
-            catch (Exception) { }
-            return context;
-        }
+            { "{p_i}", vs => (vs[0] as Player).Id.ToString() },
+            { "{p_name}", vs => (vs[0] as Player).Nickname.ToString() },
+            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{p_room}", vs => (vs[0] as Player).CurrentRoom.RoomName.ToString() },
+            { "{p_zone}", vs => (vs[0] as Player).Zone.ToString() },
+            { "{p_role}", vs => (vs[0] as Player).Role.Type.ToString() },
+            { "{p_item}", vs => (vs[0] as Player).CurrentItem.Type.ToString() },
+            { "{o_pos}", vs => { Vector3 pos = (vs[1] as Pickup).Transform.position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{o_room}", vs => (vs[1] as Pickup).Room.RoomName.ToString() },
+            { "{o_zone}", vs => (vs[1] as Pickup).Room.Zone.ToString() }
+        };
 
         public Pickup Pickup;
 
-        public IPDTO Base;
+        public new IPDTO Base;
 
         public List<AnimationModule> modules = new List<AnimationModule> { };
     }
