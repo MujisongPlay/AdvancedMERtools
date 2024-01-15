@@ -55,17 +55,20 @@ namespace AdvancedMERTools
                         case IPActionType.Explode:
                             ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
                             break;
-                        //case IPActionType.PlayAnimation:
-                        //    if (modules.Count == 0)
-                        //    {
-                        //        modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
-                        //        if (modules.Count == 0)
-                        //        {
-                        //            break;
-                        //        }
-                        //    }
-                        //    AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
-                        //    break;
+                        case IPActionType.PlayAnimation:
+                            if (modules.Count == 0)
+                            {
+                                SchematicObject schematic = gameObject.GetComponentInParent<SchematicObject>();
+                                if (schematic == null)
+                                    break;
+                                modules = AnimationModule.GetModules(Base.animationDTOs, gameObject);
+                                if (modules.Count == 0)
+                                {
+                                    break;
+                                }
+                            }
+                            AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
+                            break;
                         case IPActionType.Warhead:
                             foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
                             {
