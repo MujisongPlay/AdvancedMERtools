@@ -15,6 +15,7 @@ namespace AdvancedMERTools
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; } = false;
+        public bool ReplacementMode { get; set; } = true;
         public List<string> DummyDoorInstallingMaps { get; set; } = new List<string>
         {
             "ExampleMap"
@@ -30,6 +31,10 @@ namespace AdvancedMERTools
             {
                 15
             }
+        };
+        public Dictionary<string, List<GateSerializable>> Gates { get; set; } = new Dictionary<string, List<GateSerializable>>
+        {
+            { "ExampleMapName", new List<GateSerializable> { new GateSerializable(), new GateSerializable() } }
         };
         [Description("If turned on, it will autowork with every MER's door spawning event.")]
         public bool AutoRun { get; set; } = false;
