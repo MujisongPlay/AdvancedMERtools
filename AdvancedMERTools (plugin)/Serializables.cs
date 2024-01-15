@@ -38,7 +38,7 @@ namespace AdvancedMERTools
     {
         public TeleportInvokeType InvokeType;
         public IPActionType ActionType;
-        //public List<AnimationDTO> animationDTOs;
+        public List<AnimationDTO> animationDTOs;
         public WarheadActionType warheadActionType;
         public List<MessageModule> MessageModules;
         //public List<DropItem> dropItems;
