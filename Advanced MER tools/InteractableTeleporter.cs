@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.ComponentModel;
@@ -14,9 +14,9 @@ public class InteractableTeleporter : MonoBehaviour
     public int index;
     public TeleportInvokeType TeleportInvokeType;
     public IPActionType ActionType;
-    [ShowIf("ActionType", IPActionType.PlayAnimation)]
-    [ReorderableList]
-    public List<AnimationModule> AnimationModules;
+    //[ShowIf("ActionType", IPActionType.PlayAnimation)]
+    //[ReorderableList]
+    //public List<AnimationModule> AnimationModules;
     [ShowIf("ActionType", IPActionType.Explode)]
     [ReorderableList]
     public List<ExplodeModule> ExplodeModules;
@@ -25,9 +25,9 @@ public class InteractableTeleporter : MonoBehaviour
     [ShowIf("ActionType", IPActionType.SendMessage)]
     [ReorderableList]
     public List<MessageModule> MessageModules;
-    [ShowIf("ActionType", IPActionType.DropItems)]
-    [ReorderableList]
-    public List<DropItem> DropItems;
+    //[ShowIf("ActionType", IPActionType.DropItems)]
+    //[ReorderableList]
+    //public List<DropItem> DropItems;
     [ShowIf("ActionType", IPActionType.SendCommand)]
     [ReorderableList]
     [Label("There's many formats you can see when you put on curser to 'command context'")]
@@ -38,10 +38,24 @@ public class InteractableTeleporter : MonoBehaviour
 
     private void OnValidate()
     {
+        bool flag = false;
         if (ActionType.HasFlag(IPActionType.UpgradeItem))
         {
-            ActionType -= 128;
+            flag = true;
+            ActionType -= IPActionType.UpgradeItem;
         }
+        if (ActionType.HasFlag(IPActionType.PlayAnimation))
+        {
+            flag = true;
+            ActionType -= IPActionType.PlayAnimation;
+        }
+        if (ActionType.HasFlag(IPActionType.DropItems))
+        {
+            flag = true;
+            ActionType -= IPActionType.DropItems;
+        }
+        if (flag)
+            Debug.Log("You cannot use that option in InteractableTeleporters!");
     }
 }
 
@@ -51,10 +65,10 @@ public class ITDTO
     public TeleportInvokeType InvokeType;
     public IPActionType ActionType;
     public string ObjectId;
-    public List<AnimationDTO> animationDTOs;
+    //public List<AnimationDTO> animationDTOs;
     public WarheadActionType warheadActionType;
     public List<MessageModule> MessageModules;
-    public List<DropItem> dropItems;
+    //public List<DropItem> dropItems;
     public List<Commanding> commandings;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
@@ -96,23 +110,23 @@ public class InteractableTeleporterCompiler
                         case IPActionType.Explode:
                             DTO.ExplodeModules = ip.ExplodeModules;
                             break;
-                        case IPActionType.DropItems:
-                            DTO.dropItems = ip.DropItems;
-                            break;
-                        case IPActionType.PlayAnimation:
-                            DTO.animationDTOs = new List<AnimationDTO> { };
-                            foreach (AnimationModule module in ip.AnimationModules)
-                            {
-                                DTO.animationDTOs.Add(new AnimationDTO
-                                {
-                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
-                                    Animation = module.AnimationName,
-                                    AnimationType = module.AnimationType,
-                                    ForceExecute = module.ForceExecute,
-                                    ChanceWeight = module.ChanceWeight
-                                });
-                            }
-                            break;
+                        //case IPActionType.DropItems:
+                        //    DTO.dropItems = ip.DropItems;
+                        //    break;
+                        //case IPActionType.PlayAnimation:
+                        //    DTO.animationDTOs = new List<AnimationDTO> { };
+                        //    foreach (AnimationModule module in ip.AnimationModules)
+                        //    {
+                        //        DTO.animationDTOs.Add(new AnimationDTO
+                        //        {
+                        //            Animator = PublicFunctions.FindPath(module.Animator.transform),
+                        //            Animation = module.AnimationName,
+                        //            AnimationType = module.AnimationType,
+                        //            ForceExecute = module.ForceExecute,
+                        //            ChanceWeight = module.ChanceWeight
+                        //        });
+                        //    }
+                        //    break;
                         case IPActionType.Warhead:
                             DTO.warheadActionType = ip.warheadAction;
                             break;
