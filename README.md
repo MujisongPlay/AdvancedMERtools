@@ -4,6 +4,9 @@
 Download files that you need in above folder. And drag them into project tab in unity editor. And follow the tutorial billow.
 And in release, you can download plugin that helps execute functions and modeling of LCZ, HCZ, EZ doors.
 
+And also, download SCPSLAudioAPI: https://github.com/CedModV2/SCPSLAudioApi
+Then, put AMERTAudioModule.dll to Roaming\SCPSL\PluginAPI\Global\Dependencies.
+
 # AdvancedMERtools
 Advanced(actually helpful) tools for SCP: SL plugin MER (Map Editor Reborn)
 Download from above folder, and put them in your project. There may be more features in the future.
@@ -19,6 +22,10 @@ Arrange: Duplicate your objects and arrange them.
 Health Object: Adding hitbox to your schematic. **Require plugin.**
 
 Interactable Pickup: Similar to health object. **Require plugin**
+
+Custom Collider: ''
+
+Interactable Teleporters: ''
 
 Text: text.
 
