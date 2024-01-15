@@ -10,85 +10,49 @@ using Newtonsoft.Json;
 
 public class InteractablePickup : MonoBehaviour
 {
-    public ActionType ActionType;
-    [BoxGroup("Animation")]
-    [ShowIf("ActionType", ActionType.PlayAnimation)]
+    public InvokeType InvokeType;
+    public IPActionType ActionType;
+    public bool CancelActionWhenActive;
+    [ShowIf("ActionType", IPActionType.PlayAnimation)]
     [ReorderableList]
-    public List<AnimationModule> AnimationModules = new List<AnimationModule> { };
-    [BoxGroup("Explode")]
-    [ShowIf("ActionType", ActionType.Explode)]
-    public bool ExplosionFriendlyKill = false;
-    [BoxGroup("Warhead")]
-    [ShowIf("ActionType", ActionType.Warhead)]
-    public WarheadActionType warheadAction = WarheadActionType.Start;
-    [BoxGroup("Message")]
-    [ShowIf("ActionType", ActionType.SendMessage)]
-    public MessageType MessageType = MessageType.BroadCast;
-    [BoxGroup("Message")]
-    [ShowIf("ActionType", ActionType.SendMessage)]
-    [Tooltip("{picker_i} = picker's player id.\n{picker_name}\n{a_pos} = picker's position.\n{a_room} = picker's room\n{a_zone} = picker's zone\n{a_role} = picker's role\n{s_pos} = item's exact position.\n{s_room} = item's exact room.\n{s_zone} = item's zone.\n{a_item} = picker's current item.")]
-    public string MessageContent = "";
-    [BoxGroup("Message")]
-    [ShowIf("MessageShowCheck")]
-    public SendType SendType = SendType.Killer;
-    [BoxGroup("Drop items")]
-    [ShowIf("ActionType", ActionType.DropItems)]
+    public List<AnimationModule> AnimationModules;
+    [ShowIf("ActionType", IPActionType.Explode)]
     [ReorderableList]
-    public List<DropItem> DropItems = new List<DropItem> { };
-    [BoxGroup("Command")]
-    [ShowIf("ActionType", ActionType.SendCommand)]
+    public List<ExplodeModule> ExplodeModules;
+    [ShowIf("ActionType", IPActionType.Warhead)]
+    public WarheadActionType warheadAction;
+    [ShowIf("ActionType", IPActionType.SendMessage)]
+    [ReorderableList]
+    public List<MessageModule> MessageModules;
+    [ShowIf("ActionType", IPActionType.DropItems)]
+    [ReorderableList]
+    public List<DropItem> DropItems;
+    [ShowIf("ActionType", IPActionType.SendCommand)]
     [ReorderableList]
     [Label("There's many formats you can see when you put on curser to 'command context'")]
-    public List<Commanding> Commandings = new List<Commanding> { };
-    [BoxGroup("914Upgrade")]
-    [ShowIf("ActionType", ActionType.UpgradeItem)]
+    public List<Commanding> Commandings;
+    [ShowIf("ActionType", IPActionType.UpgradeItem)]
     public Scp914Mode Setting;
-
-    public bool MessageShowCheck()
-    {
-        return ActionType.HasFlag(ActionType.SendMessage) && MessageType != MessageType.Cassie;
-    }
+    [ShowIf("ActionType", IPActionType.GiveEffect)]
+    [ReorderableList]
+    public List<EffectGivingModule> effectGivingModules;
 }
 
 [Serializable]
 public class IPDTO
 {
-    public ActionType ActionType;
+    public InvokeType InvokeType;
+    public IPActionType ActionType;
+    public bool CancelActionWhenActive;
     public string ObjectId;
     public List<AnimationDTO> animationDTOs;
     public WarheadActionType warheadActionType;
-    public string MessageContent;
-    public MessageType MessageType;
-    public SendType SendType;
+    public List<MessageModule> MessageModules;
     public List<DropItem> dropItems;
     public List<Commanding> commandings;
     public Scp914Mode Scp914Mode;
-    public bool FFon;
-}
-
-[Flags]
-[Serializable]
-public enum Scp914Mode
-{
-    Rough = 0,
-    Coarse = 1,
-    OneToOne = 2,
-    Fine = 3,
-    VeryFine = 4
-}
-
-[Flags]
-[Serializable]
-public enum ActionType
-{
-    Disappear = 1,
-    Explode = 2,
-    PlayAnimation = 4,
-    Warhead = 8,
-    SendMessage = 16,
-    DropItems = 32,
-    SendCommand = 64,
-    UpgradeItem = 128
+    public List<ExplodeModule> ExplodeModules;
+    public List<EffectGivingModule> effectGivingModules;
 }
 
 public class InteractablePickupCompiler
@@ -124,54 +88,57 @@ public class InteractablePickupCompiler
 
         foreach (InteractablePickup ip in schematic.transform.GetComponentsInChildren<InteractablePickup>())
         {
-            if (!ip.transform.TryGetComponent<PickupComponent>(out _) || ip.ActionType == 0)
+            if (!ip.transform.TryGetComponent<PickupComponent>(out _))
             {
                 continue;
             }
             IPDTO DTO = new IPDTO
             {
-                ObjectId = FindPath(ip.transform),
-                ActionType = ip.ActionType
+                ObjectId = PublicFunctions.FindPath(ip.transform),
+                ActionType = ip.ActionType,
+                InvokeType = ip.InvokeType,
+                CancelActionWhenActive = ip.CancelActionWhenActive
             };
-            foreach (ActionType type in Enum.GetValues(typeof(ActionType)))
+            foreach (IPActionType type in Enum.GetValues(typeof(IPActionType)))
             {
                 if (ip.ActionType.HasFlag(type))
                 {
                     switch (type)
                     {
-                        case ActionType.Explode:
-                            DTO.FFon = ip.ExplosionFriendlyKill;
+                        case IPActionType.Explode:
+                            DTO.ExplodeModules = ip.ExplodeModules;
                             break;
-                        case ActionType.DropItems:
+                        case IPActionType.DropItems:
                             DTO.dropItems = ip.DropItems;
                             break;
-                        case ActionType.PlayAnimation:
+                        case IPActionType.PlayAnimation:
                             DTO.animationDTOs = new List<AnimationDTO> { };
                             foreach (AnimationModule module in ip.AnimationModules)
                             {
                                 DTO.animationDTOs.Add(new AnimationDTO
                                 {
-                                    Animator = FindPath(module.Animator.transform),
+                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
                                     Animation = module.AnimationName,
                                     AnimationType = module.AnimationType,
-                                    Force = module.ForceExecute,
-                                    Chance = module.ChanceWeight
+                                    ForceExecute = module.ForceExecute,
+                                    ChanceWeight = module.ChanceWeight
                                 });
                             }
                             break;
-                        case ActionType.Warhead:
+                        case IPActionType.Warhead:
                             DTO.warheadActionType = ip.warheadAction;
                             break;
-                        case ActionType.SendMessage:
-                            DTO.SendType = ip.SendType;
-                            DTO.MessageContent = ip.MessageContent;
-                            DTO.MessageType = ip.MessageType;
+                        case IPActionType.SendMessage:
+                            DTO.MessageModules = ip.MessageModules;
                             break;
-                        case ActionType.SendCommand:
+                        case IPActionType.SendCommand:
                             DTO.commandings = ip.Commandings;
                             break;
-                        case ActionType.UpgradeItem:
+                        case IPActionType.UpgradeItem:
                             DTO.Scp914Mode = ip.Setting;
+                            break;
+                        case IPActionType.GiveEffect:
+                            DTO.effectGivingModules = ip.effectGivingModules;
                             break;
                         default:
                             break;
@@ -186,28 +153,5 @@ public class InteractablePickupCompiler
 
         File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-Pickups.json"), serializedData);
         Debug.Log("Successfully Imported Interactable Pickups.");
-    }
-
-    public static string FindPath(Transform transform)
-    {
-        string path = "";
-        if (transform.TryGetComponent<Schematic>(out _))
-        {
-            return path;
-        }
-        while (true)
-        {
-            for (int i = 0; i < transform.parent.childCount; i++)
-            {
-                if (transform.parent.GetChild(i) == transform)
-                {
-                    path += i.ToString();
-                }
-            }
-            transform = transform.parent;
-            if (transform.TryGetComponent<Schematic>(out _)) break;
-            path += " ";
-        }
-        return path;
     }
 }
