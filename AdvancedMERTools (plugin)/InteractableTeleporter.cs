@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -55,17 +55,17 @@ namespace AdvancedMERTools
                         case IPActionType.Explode:
                             ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
                             break;
-                        case IPActionType.PlayAnimation:
-                            if (modules.Count == 0)
-                            {
-                                modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
-                                if (modules.Count == 0)
-                                {
-                                    break;
-                                }
-                            }
-                            AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
-                            break;
+                        //case IPActionType.PlayAnimation:
+                        //    if (modules.Count == 0)
+                        //    {
+                        //        modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
+                        //        if (modules.Count == 0)
+                        //        {
+                        //            break;
+                        //        }
+                        //    }
+                        //    AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
+                        //    break;
                         case IPActionType.Warhead:
                             foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
                             {
@@ -98,9 +98,9 @@ namespace AdvancedMERTools
                         case IPActionType.SendMessage:
                             MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, player, TO);
                             break;
-                        case IPActionType.DropItems:
-                            DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
-                            break;
+                        //case IPActionType.DropItems:
+                        //    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
+                        //    break;
                         case IPActionType.SendCommand:
                             CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, TO);
                             break;
