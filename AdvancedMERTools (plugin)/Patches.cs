@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,6 +30,7 @@ using PlayerRoles.FirstPersonControl;
 using CommandSystem;
 using CommandSystem.Commands;
 using RemoteAdmin;
+using Utf8Json.Formatters;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -58,6 +59,8 @@ namespace AdvancedMERTools
     {
         static void Postfix(MapSchematic map)
         {
+            if (map == null || !map.IsValid)
+                return;
             string path = Path.Combine(MapEditorReborn.MapEditorReborn.MapsDir, map.Name + "-ITeleporters.json");
             if (File.Exists(path))
             {
@@ -72,6 +75,21 @@ namespace AdvancedMERTools
                         interactable.Base = to;
                     }
                 }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(ServerListFormatter), nameof(ServerListFormatter.Serialize))]
+    public class PlayerCountPatcher
+    {
+        static void Prefix(ref JsonWriter writer, ServerListItem value, IJsonFormatterResolver formatterResolver)
+        {
+            if (AdvancedMERTools.Singleton.Config.UseExperimentalFeature)
+            {
+                if (int.TryParse(value.players, out int result))
+                    value = new ServerListItem(value.serverId, value.ip, value.port, (result + 1 - ReferenceHub.AllHubs.Count(x => x.Mode == CentralAuth.ClientInstanceMode.DedicatedServer)).ToString(), value.info, value.pastebin, value.version, value.friendlyFire, value.modded, value.whitelist, value.officialCode);
+                else
+                    ServerConsole.AddLog("Send folloing message to me. - Mujishung: " + value.players);
             }
         }
     }
