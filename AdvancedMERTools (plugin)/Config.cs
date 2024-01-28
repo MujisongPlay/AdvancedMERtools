@@ -48,6 +48,7 @@ namespace AdvancedMERTools
         //[Description("If you build doors with external-plugin not MER, use this option.")]
         //public bool AutoRunWithEveryDoor { get; set; } = false;
         public bool CustomSpawnPointEnable { get; set; } = true;
+        public bool UseExperimentalFeature { get; set; } = false;
 
         [Serializable]
         public enum EventList
