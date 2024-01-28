@@ -86,7 +86,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup += manager.OnItemSearching;
-            Exiled.Events.Handlers.Player.ItemAdded += manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
             Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
             Exiled.Events.Handlers.Player.Joined += manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting += manager.OnTeleport;
@@ -104,7 +104,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup -= manager.OnItemSearching;
-            Exiled.Events.Handlers.Player.ItemAdded -= manager.OnItemPicked;
+            Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
             Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
             Exiled.Events.Handlers.Player.Joined -= manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting -= manager.OnTeleport;
@@ -237,7 +237,7 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.dummyGates.ForEach(x => x.OnPickingUp(ev));
         }
 
-        public void OnItemPicked(Exiled.Events.EventArgs.Player.ItemAddedEventArgs ev)
+        public void OnItemPicked(Exiled.Events.EventArgs.Player.PickingUpItemEventArgs ev)
         {
             List<InteractablePickup> list = AdvancedMERTools.Singleton.InteractablePickups.FindAll(x => x.Pickup == ev.Pickup);
             List<Pickup> removeList = new List<Pickup> { };
@@ -345,7 +345,7 @@ namespace AdvancedMERTools
                         ServerLogs.AddLog(ServerLogs.Modules.Logger, "Advanced MER tools: Could not find appropriate child!", ServerLogs.ServerLogType.RemoteAdminActivity_Misc);
                         break;
                     }
-                    target = target.GetChild(int.Parse(path[i].ToString()));
+                    target = target.GetChild(int.Parse(path[i]));
                 }
             }
             return target;
