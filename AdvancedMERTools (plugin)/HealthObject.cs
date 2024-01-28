@@ -15,6 +15,7 @@ using CommandSystem;
 using MapEditorReborn.API.Features.Objects;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.ThrowableProjectiles;
+using AdminToys;
 
 namespace AdvancedMERTools
 {
@@ -98,9 +99,11 @@ namespace AdvancedMERTools
                                     Destroy(this.gameObject, 0.1f);
                                     break;
                                 case DeadType.GetRigidbody:
+                                    MakeNonStatic(gameObject);
                                     this.gameObject.AddComponent<Rigidbody>();
                                     break;
                                 case DeadType.DynamicDisappearing:
+                                    MakeNonStatic(gameObject);
                                     break;
                                 case DeadType.Explode:
                                     ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
@@ -168,6 +171,14 @@ namespace AdvancedMERTools
             }
         }
 
+        void MakeNonStatic(GameObject game)
+        {
+            foreach (AdminToyBase adminToyBase in game.transform.GetComponentsInChildren<AdminToyBase>())
+            {
+                adminToyBase.enabled = true;
+            }
+        }
+
         static readonly Dictionary<string, Func<object[], string>> Formatter = new Dictionary<string, Func<object[], string>>
         {
             { "{p_i}", vs => (vs[0] as Player).Id.ToString() },
@@ -192,21 +203,6 @@ namespace AdvancedMERTools
                 {
                     Destroy();
                 }
-                //if (Base.AnimationCurve != null)
-                //{
-                //    if (Base.AnimationCurve.keys.Last().time < animationkey)
-                //    {
-                //        Destroy();
-                //    }
-                //    else
-                //    {
-                //        this.transform.localScale = Vector3.one * Base.AnimationCurve.Evaluate(animationkey);
-                //    }
-                //}
-                //else
-                //{
-                //}
-                //animationkey += Time.deltaTime;
             }
         }
 
