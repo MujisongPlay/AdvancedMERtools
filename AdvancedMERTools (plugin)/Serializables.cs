@@ -478,7 +478,7 @@ namespace AdvancedMERTools
 
             foreach (DropItem item in items)
             {
-                Vector3 vector3 = transform.TransformPoint(DropLocalPosition);
+                Vector3 vector3 = transform.TransformPoint(item.DropLocalPosition);
                 if (item.CustomItemId != 0 && CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
                 {
                     for (int i = 0; i < item.Count; i++)
