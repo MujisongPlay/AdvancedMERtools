@@ -1,6 +1,6 @@
 # How to Install AdvancedMERtools (AMERT)
 
-![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/cd6305d8-84b0-4f84-bbf0-fa9c0aa7d5f4)
+![image](https://github.com/Maciupek/AdvancedMERtools/blob/main/AMERT.png?raw=true)
 
 > [!IMPORTANT]  
 > This plugin requires NaughtyAttributes, which can be installed from the Unity Asset Store: [NaughtyAttributes](https://assetstore.unity.com/packages/tools/utilities/naughtyattributes-129996)
