@@ -1,49 +1,47 @@
-# How to install
+# How to Install AdvancedMERtools (AMERT)
+
 ![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/cd6305d8-84b0-4f84-bbf0-fa9c0aa7d5f4)
 
-Download files that you need in above folder. And drag them into project tab in unity editor. And follow the tutorial billow.
-And in release, you can download plugin that helps execute functions and modeling of LCZ, HCZ, EZ doors.
+> [!IMPORTANT]  
+> This plugin requires NaughtyAttributes, which can be installed from the Unity Asset Store: [NaughtyAttributes](https://assetstore.unity.com/packages/tools/utilities/naughtyattributes-129996)
 
-And also, download SCPSLAudioAPI: https://github.com/CedModV2/SCPSLAudioApi
-Then, put AMERTAudioModule.dll to Roaming\SCPSL\PluginAPI\Global\Dependencies.
+## Installation Instructions
+1. Install and import NaughtyAttributes from the link above
+2. Download the necessary files from the specified folder above.
+3. Drag and drop the files into the 'Project' tab in the Unity Editor. Preferably to `DONT TOUCH/Scripts`
+4. In the release tab, you will find a plugin that facilitates the execution of functions and modeling for LCZ, HCZ, and EZ doors.
 
-# AdvancedMERtools
-Advanced(actually helpful) tools for SCP: SL plugin MER (Map Editor Reborn)
-Download from above folder, and put them in your project. There may be more features in the future.
+Additionally, download the SCPSLAudioAPI from the following link:
+[SCPSLAudioAPI](https://github.com/CedModV2/SCPSLAudioApi)
+Then, place the `AMERTAudioModule.dll` file in the `Roaming\SCPSL\PluginAPI\Global\Dependencies` directory.
 
-AutoScaler: It will help you making some grouped object scale up or down.
+## AdvancedMERtools Description
+AdvancedMERtools offers advanced tools for the SCP: SL plugin called MapEditorReborn (MER). Please download the tools from the folder mentioned above and integrate them into your project. We plan to add more features in the future.
 
-Rotator: It will rotate your objects like magnetic field or sphere (Or potery).
+### Features
+- **AutoScaler**: Scales grouped objects up or down automatically.
+- **Rotator**: Rotates objects akin to the behavior of a magnetic field or sphere.
+- **Mirror**: Creates a mirrored copy of objects.
+- **Arrange**: Duplicates and arranges objects.
+- **Health Object**: Adds a hitbox to your objects. **Requires additional plugin.**
+- **Interactable Pickup**: Functions similarly to the Health Object. **Requires additional plugin.**
+- **Custom Collider**: Adds custom collision properties to objects.
+- **Interactable Teleporters**: 
+- **Text**: Adds text to set empty object.
+- **Custom RGBA**: Extends the minimum and maximum RGBA values beyond 0-255 to enhance object glow. **Requires additional plugin.**
+- **Converter**: Converts Unity's primitives into MER's components if placed accidentally. Activating it will also automatically color your primitives based on the set material.
 
-Mirror: mirroring.
+> [!NOTE]
+> Applying the same script from parent to children objects is not recommended as it may lead to unexpected errors. Please use scripts individually.
 
-Arrange: Duplicate your objects and arrange them.
-
-Health Object: Adding hitbox to your schematic. **Require plugin.**
-
-Interactable Pickup: Similar to health object. **Require plugin**
-
-Custom Collider: ''
-
-Interactable Teleporters: ''
-
-Text: text.
-
-Custom RGBA: Allow to exceed min/max RGBA value 0~255 to make object glow.
-
-Convertor: If you placed unity's primitives instead of MER's by accident, you can convert them into MER's one. Use it like schematic component. And press "Activate", it will also automatically color your primitive according to material you probably set.
-
-**NOTION: Using same script from parent to children is designed to be not errored. But just in case, please use them individually. Idk what will happen but it wouldn't be that good.**
-
-Tutorial(~Arrange): https://youtu.be/adXuM0UINhE
-
-Tutorial(~Text): https://youtu.be/UmkEbiVhDTE
+## Tutorials
+- Arrange Tutorial: [Watch Tutorial](https://youtu.be/adXuM0UINhE)
+- Text Tutorial: [Watch Tutorial](https://youtu.be/UmkEbiVhDTE)
 
 ![image](https://github.com/MujisongPlay/AdvancedMERtools/assets/96275409/3249ec64-4bfc-4071-98fb-51d1052cc8e6)
 
-# DummyDoorSpawner
+## DummyDoorSpawner
+The DummyDoorSpawner creates visible dummy doors to counteract the visibility issues caused by the culling system.
 
-Since doors are invisible out-boundary because of culling system. It will create dummy doors.
-
-Showcase: https://youtu.be/TLkXputvKFc
-Very simple tutorial: https://youtu.be/-_IvE2kCHvU
+- Showcase Video: [Watch Showcase](https://youtu.be/TLkXputvKFc)
+- Straightforward Installation Tutorial: [Watch Tutorial](https://youtu.be/-_IvE2kCHvU)
