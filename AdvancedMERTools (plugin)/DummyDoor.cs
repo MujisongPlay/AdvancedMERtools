@@ -80,14 +80,11 @@ namespace AdvancedMERTools
             });
         }
 
-        public void OnInteractDoor(InteractingDoorEventArgs ev)
+        public void OnInteractDoor(bool trigger)
         {
             if (this.RealDoor == null || animator == null)
                 return;
-            if (ev.Door == RealDoor && ev.IsAllowed)
-            {
-                animator.Play(ev.Door.IsOpen ? "DoorClose" : "DoorOpen");
-            }
+            animator.Play(trigger ? "DoorOpen" : "DoorClose");
         }
 
         void Update()
