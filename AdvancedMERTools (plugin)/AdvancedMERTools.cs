@@ -87,7 +87,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup += manager.OnItemSearching;
             Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
-            Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
+            //Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
             Exiled.Events.Handlers.Player.Joined += manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting += manager.OnTeleport;
         }
@@ -105,7 +105,7 @@ namespace AdvancedMERTools
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup -= manager.OnItemSearching;
             Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
-            Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
+            //Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
             Exiled.Events.Handlers.Player.Joined -= manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting -= manager.OnTeleport;
         }
@@ -193,10 +193,10 @@ namespace AdvancedMERTools
             ev.RaycastHit.collider.transform.GetComponentsInParent<HealthObject>().ForEach(x => x.OnShot(ev));
         }
 
-        public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
-        {
-            AdvancedMERTools.Singleton.dummyDoors.ForEach(x => x.OnInteractDoor(ev));
-        }
+        //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
+        //{
+        //    AdvancedMERTools.Singleton.dummyDoors.ForEach(x => x.OnInteractDoor(ev));
+        //}
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
