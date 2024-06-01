@@ -54,6 +54,17 @@ namespace AdvancedMERTools
         }
     }
 
+    [HarmonyPatch(nameof(DoorVariant), nameof(DoorVariant.NetworkTargetState), MethodType.Setter)]
+    public class DoorVariantPatcher
+    {
+        static void Prefix(DoorVariant __instance, bool value)
+        {
+            DummyDoor d = AdvancedMERTools.Singleton.dummyDoors.Find(x => x.RealDoor == Door.Get(__instance));
+            if (d != null)
+                d.OnInteractDoor(value);
+        }
+    }
+
     [HarmonyPatch(typeof(MapUtils), nameof(MapUtils.LoadMap), new Type[] { typeof(MapSchematic) })]
     public class MapLoadingPatcher
     {
