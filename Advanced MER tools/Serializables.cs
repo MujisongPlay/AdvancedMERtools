@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using NaughtyAttributes;
+//using NaughtyAttributes;
 
 [Flags]
 [Serializable]
