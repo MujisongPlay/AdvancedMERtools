@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using NaughtyAttributes;
 
 
 public class HealthObject : MonoBehaviour
@@ -15,33 +14,33 @@ public class HealthObject : MonoBehaviour
     public int ArmorEfficient;
     public DeadType DeadType;
     public float DeadActionDelay;
-    [ShowIf("DeadType", DeadType.Explode)]
-    [ReorderableList]
+    //[ShowIf("DeadType", DeadType.Explode)]
+    //[ReorderableList]
     public List<ExplodeModule> ExplodeModules;
-    [ShowIf("KillCheck")]
+    //[ShowIf("KillCheck")]
     public bool DoNotRemoveAfterDeath;
-    [ShowIf("DeadType", DeadType.PlayAnimation)]
-    [ReorderableList]
+    //[ShowIf("DeadType", DeadType.PlayAnimation)]
+    //[ReorderableList]
     public List<AnimationModule> AnimationModules;
-    [ShowIf("DeadType", DeadType.Warhead)]
+    //[ShowIf("DeadType", DeadType.Warhead)]
     public WarheadActionType warheadAction;
-    [ShowIf("DeadType", DeadType.ResetHP)]
+    //[ShowIf("DeadType", DeadType.ResetHP)]
     public float ResetHPTo;
-    [ReorderableList]
+    //[ReorderableList]
     public List<WhitelistWeapon> whitelistWeapons;
-    [ShowIf("DeadType", DeadType.SendMessage)]
+    //[ShowIf("DeadType", DeadType.SendMessage)]
     [Tooltip("{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}")]
-    [ReorderableList]
+    //[ReorderableList]
     public List<MessageModule> MessageModules;
-    [ShowIf("DeadType", DeadType.DropItems)]
-    [ReorderableList]
+    //[ShowIf("DeadType", DeadType.DropItems)]
+    //[ReorderableList]
     public List<DropItem> DropItems;
-    [ShowIf("DeadType", DeadType.SendCommand)]
-    [ReorderableList]
-    [Label("There's many formats you can see when you put on curser to 'command context'")]
+    //[ShowIf("DeadType", DeadType.SendCommand)]
+    //[ReorderableList]
+    [Header("There's many formats you can see when you put on curser to 'command context'")]
     public List<Commanding> Commandings;
-    [ShowIf("DeadType", DeadType.GiveEffect)]
-    [ReorderableList]
+    //[ShowIf("DeadType", DeadType.GiveEffect)]
+    //[ReorderableList]
     public List<EffectGivingModule> effectGivingModules;
 
     public bool KillCheck()
