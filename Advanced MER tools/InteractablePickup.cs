@@ -2,7 +2,7 @@ using System.Collections;
 using System.ComponentModel;
 using System.Collections.Generic;
 using UnityEngine;
-using NaughtyAttributes;
+//using NaughtyAttributes;
 using System;
 using System.IO;
 using UnityEditor;
@@ -13,28 +13,28 @@ public class InteractablePickup : MonoBehaviour
     public InvokeType InvokeType;
     public IPActionType ActionType;
     public bool CancelActionWhenActive;
-    [ShowIf("ActionType", IPActionType.PlayAnimation)]
-    [ReorderableList]
+    //[ShowIf("ActionType", IPActionType.PlayAnimation)]
+    //[ReorderableList]
     public List<AnimationModule> AnimationModules;
-    [ShowIf("ActionType", IPActionType.Explode)]
-    [ReorderableList]
+    //[ShowIf("ActionType", IPActionType.Explode)]
+    //[ReorderableList]
     public List<ExplodeModule> ExplodeModules;
-    [ShowIf("ActionType", IPActionType.Warhead)]
+    //[ShowIf("ActionType", IPActionType.Warhead)]
     public WarheadActionType warheadAction;
-    [ShowIf("ActionType", IPActionType.SendMessage)]
-    [ReorderableList]
+    //[ShowIf("ActionType", IPActionType.SendMessage)]
+    //[ReorderableList]
     public List<MessageModule> MessageModules;
-    [ShowIf("ActionType", IPActionType.DropItems)]
-    [ReorderableList]
+    //[ShowIf("ActionType", IPActionType.DropItems)]
+    //[ReorderableList]
     public List<DropItem> DropItems;
-    [ShowIf("ActionType", IPActionType.SendCommand)]
-    [ReorderableList]
-    [Label("There's many formats you can see when you put on curser to 'command context'")]
+    //[ShowIf("ActionType", IPActionType.SendCommand)]
+    //[ReorderableList]
+    [Header("There's many formats you can see when you put on curser to 'command context'")]
     public List<Commanding> Commandings;
-    [ShowIf("ActionType", IPActionType.UpgradeItem)]
+    //[ShowIf("ActionType", IPActionType.UpgradeItem)]
     public Scp914Mode Setting;
-    [ShowIf("ActionType", IPActionType.GiveEffect)]
-    [ReorderableList]
+    //[ShowIf("ActionType", IPActionType.GiveEffect)]
+    //[ReorderableList]
     public List<EffectGivingModule> effectGivingModules;
 }
 
