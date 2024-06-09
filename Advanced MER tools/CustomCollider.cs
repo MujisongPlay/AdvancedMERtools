@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using NaughtyAttributes;
 
 public class CustomCollider : MonoBehaviour
 {
@@ -16,26 +15,26 @@ public class CustomCollider : MonoBehaviour
     //public bool InvisibleCollider;
     //[Description("Bounds' extra size. That helps it detect even if primitives are collidable.")]
     //public float ContactOffSet;
-    [ShowIf("ActionFlag", ColliderActionType.ModifyHealth)]
-	[BoxGroup("Modify Health")]
+    //[ShowIf("ActionFlag", ColliderActionType.ModifyHealth)]
+	[Header("Modify Health")]
     public float Amount;
-	[ShowIf("ActionFlag", ColliderActionType.GiveEffect)]
-	[ReorderableList]
+	//[ShowIf("ActionFlag", ColliderActionType.GiveEffect)]
+	//[ReorderableList]
 	public List<EffectGivingModule> EffectGivingModules;
-	[ShowIf("ActionFlag", ColliderActionType.PlayAnimation)]
-	[ReorderableList]
+	//[ShowIf("ActionFlag", ColliderActionType.PlayAnimation)]
+	//[ReorderableList]
 	public List<AnimationModule> AnimationModules;
-	[ShowIf("ActionFlag", ColliderActionType.SendCommand)]
-	[ReorderableList]
+	//[ShowIf("ActionFlag", ColliderActionType.SendCommand)]
+	//[ReorderableList]
 	public List<Commanding> Commandings;
-	[ShowIf("ActionFlag", ColliderActionType.SendMessage)]
-	[ReorderableList]
+	//[ShowIf("ActionFlag", ColliderActionType.SendMessage)]
+	//[ReorderableList]
 	public List<MessageModule> MessageModules;
-	[ShowIf("ActionFlag", ColliderActionType.Explode)]
-	[ReorderableList]
+	//[ShowIf("ActionFlag", ColliderActionType.Explode)]
+	//[ReorderableList]
 	public List<ExplodeModule> ExplodeModules;
-	[BoxGroup("Warhead")]
-	[ShowIf("ActionFlag", ColliderActionType.Warhead)]
+	//[BoxGroup("Warhead")]
+	//[ShowIf("ActionFlag", ColliderActionType.Warhead)]
 	public WarheadActionType warheadAction = WarheadActionType.Start;
 }
 
