@@ -6,10 +6,11 @@
 > This plugin requires NaughtyAttributes, which can be installed from the Unity Asset Store: [NaughtyAttributes](https://assetstore.unity.com/packages/tools/utilities/naughtyattributes-129996)
 
 ## Installation Instructions
-1. Install and import NaughtyAttributes from the link above
-2. Download the necessary files from the specified folder above.
-3. Drag and drop the files into the 'Project' tab in the Unity Editor. Preferably to `DONT TOUCH/Scripts`
-4. In the release tab, you will find a plugin that facilitates the execution of functions and modeling for LCZ, HCZ, and EZ doors.
+1. Install NaughtyAttributes from the link above
+2. Import NaughtyAttributes from the Unity Package Manager (Window > Package Manager)
+3. Download the necessary files from the specified folder above.
+4. Drag and drop the files into the 'Project' tab in the Unity Editor. Preferably to `DONT TOUCH/Scripts`
+5. In the release tab, you will find a plugin that facilitates the execution of functions and modeling for LCZ, HCZ, and EZ doors.
 
 Additionally, download the SCPSLAudioAPI from the following link:
 [SCPSLAudioAPI](https://github.com/CedModV2/SCPSLAudioApi)
