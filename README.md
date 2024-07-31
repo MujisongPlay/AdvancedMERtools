@@ -29,7 +29,7 @@ AdvancedMERtools offers advanced tools for the SCP: SL plugin called MapEditorRe
 - **Custom Collider**: Adds custom collision properties to objects.
 - **Interactable Teleporters**: 
 - **Text**: Adds text to set empty object.
-- **Custom RGBA**: Extends the minimum and maximum RGBA values beyond 0-255 to enhance object glow. **Requires additional plugin.**
+- **Custom RGBA**: Extends the minimum and maximum RGBA values beyond 0-255 to enhance object glow.
 - **Converter**: Converts Unity's primitives into MER's components if placed accidentally. Activating it will also automatically color your primitives based on the set material.
 
 > [!NOTE]
