@@ -112,7 +112,7 @@ namespace AdvancedMERTools
                                         vs.Add(j);
                                     }
                                 }
-                                Scp914.Scp914Upgrader.Upgrade(new Collider[] { col }, Vector3.zero, Scp914.Scp914Mode.Held, (Scp914.Scp914KnobSetting)vs.RandomItem());
+                                Scp914.Scp914Upgrader.Upgrade(new Collider[] { col }, Scp914.Scp914Mode.Held, (Scp914.Scp914KnobSetting)vs.RandomItem());
                             }
                             break;
                         case IPActionType.GiveEffect:
