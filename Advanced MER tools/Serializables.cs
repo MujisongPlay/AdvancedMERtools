@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -71,91 +71,103 @@ public enum EffectFlag
 
 public enum EffectType
 {
-	// Token: 0x040002F2 RID: 754
-	None = -1,
-	// Token: 0x040002F3 RID: 755
+	// Token: 0x0400034F RID: 847
+	None,
+	// Token: 0x04000350 RID: 848
 	AmnesiaItems,
-	// Token: 0x040002F4 RID: 756
+	// Token: 0x04000351 RID: 849
 	AmnesiaVision,
-	// Token: 0x040002F5 RID: 757
+	// Token: 0x04000352 RID: 850
 	Asphyxiated,
-	// Token: 0x040002F6 RID: 758
+	// Token: 0x04000353 RID: 851
 	Bleeding,
-	// Token: 0x040002F7 RID: 759
+	// Token: 0x04000354 RID: 852
 	Blinded,
-	// Token: 0x040002F8 RID: 760
+	// Token: 0x04000355 RID: 853
 	Burned,
-	// Token: 0x040002F9 RID: 761
+	// Token: 0x04000356 RID: 854
 	Concussed,
-	// Token: 0x040002FA RID: 762
+	// Token: 0x04000357 RID: 855
 	Corroding,
-	// Token: 0x040002FB RID: 763
+	// Token: 0x04000358 RID: 856
 	Deafened,
-	// Token: 0x040002FC RID: 764
+	// Token: 0x04000359 RID: 857
 	Decontaminating,
-	// Token: 0x040002FD RID: 765
+	// Token: 0x0400035A RID: 858
 	Disabled,
-	// Token: 0x040002FE RID: 766
+	// Token: 0x0400035B RID: 859
 	Ensnared,
-	// Token: 0x040002FF RID: 767
+	// Token: 0x0400035C RID: 860
 	Exhausted,
-	// Token: 0x04000300 RID: 768
+	// Token: 0x0400035D RID: 861
 	Flashed,
-	// Token: 0x04000301 RID: 769
+	// Token: 0x0400035E RID: 862
 	Hemorrhage,
-	// Token: 0x04000302 RID: 770
+	// Token: 0x0400035F RID: 863
 	Invigorated,
-	// Token: 0x04000303 RID: 771
+	// Token: 0x04000360 RID: 864
 	BodyshotReduction,
-	// Token: 0x04000304 RID: 772
+	// Token: 0x04000361 RID: 865
 	Poisoned,
-	// Token: 0x04000305 RID: 773
+	// Token: 0x04000362 RID: 866
 	Scp207,
-	// Token: 0x04000306 RID: 774
+	// Token: 0x04000363 RID: 867
 	Invisible,
-	// Token: 0x04000307 RID: 775
+	// Token: 0x04000364 RID: 868
 	SinkHole,
-	// Token: 0x04000308 RID: 776
+	// Token: 0x04000365 RID: 869
 	DamageReduction,
-	// Token: 0x04000309 RID: 777
+	// Token: 0x04000366 RID: 870
 	MovementBoost,
-	// Token: 0x0400030A RID: 778
+	// Token: 0x04000367 RID: 871
 	RainbowTaste,
-	// Token: 0x0400030B RID: 779
+	// Token: 0x04000368 RID: 872
 	SeveredHands,
-	// Token: 0x0400030C RID: 780
+	// Token: 0x04000369 RID: 873
 	Stained,
-	// Token: 0x0400030D RID: 781
+	// Token: 0x0400036A RID: 874
 	Vitality,
-	// Token: 0x0400030E RID: 782
+	// Token: 0x0400036B RID: 875
 	Hypothermia,
-	// Token: 0x0400030F RID: 783
+	// Token: 0x0400036C RID: 876
 	Scp1853,
-	// Token: 0x04000310 RID: 784
+	// Token: 0x0400036D RID: 877
 	CardiacArrest,
-	// Token: 0x04000311 RID: 785
+	// Token: 0x0400036E RID: 878
 	InsufficientLighting,
-	// Token: 0x04000312 RID: 786
+	// Token: 0x0400036F RID: 879
 	SoundtrackMute,
-	// Token: 0x04000313 RID: 787
+	// Token: 0x04000370 RID: 880
 	SpawnProtected,
-	// Token: 0x04000314 RID: 788
+	// Token: 0x04000371 RID: 881
 	Traumatized,
-	// Token: 0x04000315 RID: 789
+	// Token: 0x04000372 RID: 882
 	AntiScp207,
-	// Token: 0x04000316 RID: 790
+	// Token: 0x04000373 RID: 883
 	Scanned,
-	// Token: 0x04000317 RID: 791
+	// Token: 0x04000374 RID: 884
 	PocketCorroding,
-	// Token: 0x04000318 RID: 792
+	// Token: 0x04000375 RID: 885
 	SilentWalk,
-	// Token: 0x04000319 RID: 793
+	// Token: 0x04000376 RID: 886
 	[Obsolete("Not functional in-game")]
 	Marshmallow,
-	// Token: 0x0400031A RID: 794
+	// Token: 0x04000377 RID: 887
 	Strangled,
-	// Token: 0x0400031B RID: 795
-	Ghostly
+	// Token: 0x04000378 RID: 888
+	Ghostly,
+	// Token: 0x04000379 RID: 889
+	FogControl,
+	// Token: 0x0400037A RID: 890
+	Slowness,
+	// Token: 0x0400037B RID: 891
+	Scp1344,
+	// Token: 0x0400037C RID: 892
+	SeveredEyes,
+	// Token: 0x0400037D RID: 893
+	PitDeath,
+	// Token: 0x0400037E RID: 894
+	Blurred
 }
 
 [Flags]
@@ -170,9 +182,16 @@ public enum TeleportInvokeType
 [Serializable]
 public class AnimationDTO : RandomExecutionModule
 {
-	public string Animator;
-	public string Animation;
+	[JsonIgnore]
+	public GameObject Animator;
+	[HideInInspector]
+	public string AnimatorAdress;
+	public string AnimationName;
 	public AnimationType AnimationType;
+	public ParameterType ParameterType;
+	public string ParameterName;
+	[Header("If parameter type is bool or trigger, input 0 for false, and input 1 for true.")]
+	public string ParameterValue;
 }
 
 [Flags]
@@ -193,11 +212,17 @@ public enum DeadType
 }
 
 [Serializable]
-public class AnimationModule : RandomExecutionModule
+public class GroovyModule : RandomExecutionModule
 {
-	public GameObject Animator;
-	public string AnimationName;
-	public AnimationType AnimationType;
+	public List<MonoBehaviour> Activator;
+	public bool Enable;
+}
+
+[Serializable]
+public class GMDTO : RandomExecutionModule
+{
+	public List<int> codes;
+	public bool Enable;
 }
 
 [Serializable]
@@ -211,11 +236,18 @@ public class MessageModule : RandomExecutionModule
 	public float Duration;
 }
 
+//[Serializable]
+//public class AudioModule : RandomExecutionModule
+//{
+//	public string AudioName = ".ogg";
+//}
+
 [Serializable]
 public class RandomExecutionModule
 {
 	public float ChanceWeight;
 	public bool ForceExecute;
+	public float ActionDelay;
 }
 
 [Flags]
@@ -234,7 +266,17 @@ public enum WarheadActionType
 public enum AnimationType
 {
 	Start,
-	Stop
+	Stop,
+	ModifyParameter
+}
+
+[Serializable]
+public enum ParameterType
+{
+	Integer,
+	Float,
+	Bool,
+	Trigger
 }
 
 [Serializable]
