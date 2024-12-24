@@ -46,7 +46,8 @@ namespace AdvancedMERTools
                 string str = "DoorLCZ";
                 if (__instance.gameObject.name.Contains("HCZ")) str = "DoorHCZ";
                 if (__instance.gameObject.name.Contains("EZ")) str = "DoorEZ";
-                SchematicObject @object = ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation, isStatic: false);
+                //SchematicObject @object = ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation, isStatic: false);
+                SchematicObject @object = ObjectSpawner.SpawnSchematic(str, basicDoor.transform.position, basicDoor.transform.rotation, basicDoor.transform.localScale, null);
                 DummyDoor dummy = @object.gameObject.AddComponent<DummyDoor>();
                 AdvancedMERTools.Singleton.dummyDoors.Add(dummy);
                 dummy.RealDoor = Door.Get(basicDoor);
@@ -65,43 +66,54 @@ namespace AdvancedMERTools
         }
     }
 
-    [HarmonyPatch(typeof(MapUtils), nameof(MapUtils.LoadMap), new Type[] { typeof(MapSchematic) })]
-    public class MapLoadingPatcher
+    [HarmonyPatch(nameof(DoorVariant), nameof(DoorVariant.NetworkActiveLocks), MethodType.Setter)]
+    public class DoorVariantLockPatcher
     {
-        static void Postfix(MapSchematic map)
+        static void Prefix(DoorVariant __instance, ushort value)
         {
-            if (map == null || !map.IsValid)
-                return;
-            string path = Path.Combine(MapEditorReborn.MapEditorReborn.MapsDir, map.Name + "-ITeleporters.json");
-            if (File.Exists(path))
-            {
-                List<ITDTO> iTDTOs = JsonSerializer.Deserialize<List<ITDTO>>(File.ReadAllText(path));
-                TeleportObject[] teleports = API.SpawnedObjects.Where(x => x is TeleportObject).Cast<TeleportObject>().ToArray();
-                foreach (ITDTO to in iTDTOs)
-                {
-                    int n = int.Parse(to.ObjectId);
-                    if (n > 0 && n <= teleports.Length)
-                    {
-                        InteractableTeleporter interactable = teleports[n - 1].gameObject.AddComponent<InteractableTeleporter>();
-                        interactable.Base = to;
-                    }
-                }
-            }
+            CustomDoor d = AdvancedMERTools.Singleton.customDoors.Find(x => x.door == Door.Get(__instance));
+            if (d != null)
+                d.OnLockChange(value);
         }
     }
 
-    [HarmonyPatch(typeof(ServerListFormatter), nameof(ServerListFormatter.Serialize))]
-    public class PlayerCountPatcher
-    {
-        static void Prefix(ref JsonWriter writer, ServerListItem value, IJsonFormatterResolver formatterResolver)
-        {
-            if (AdvancedMERTools.Singleton.Config.UseExperimentalFeature)
-            {
-                if (int.TryParse(value.players, out int result))
-                    value = new ServerListItem(value.serverId, value.ip, value.port, (result + 1 - ReferenceHub.AllHubs.Count(x => x.Mode == CentralAuth.ClientInstanceMode.DedicatedServer)).ToString(), value.info, value.pastebin, value.version, value.friendlyFire, value.modded, value.whitelist, value.officialCode);
-                else
-                    ServerConsole.AddLog("Send folloing message to me. - Mujishung: " + value.players);
-            }
-        }
-    }
+    //[HarmonyPatch(typeof(MapUtils), nameof(MapUtils.LoadMap), new Type[] { typeof(MapSchematic) })]
+    //public class MapLoadingPatcher
+    //{
+    //    static void Postfix(MapSchematic map)
+    //    {
+    //        if (map == null || !map.IsValid)
+    //            return;
+    //        string path = Path.Combine(MapEditorReborn.MapEditorReborn.MapsDir, map.Name + "-ITeleporters.json");
+    //        if (File.Exists(path))
+    //        {
+    //            List<ITDTO> iTDTOs = JsonSerializer.Deserialize<List<ITDTO>>(File.ReadAllText(path));
+    //            TeleportObject[] teleports = API.SpawnedObjects.Where(x => x is TeleportObject).Cast<TeleportObject>().ToArray();
+    //            foreach (ITDTO to in iTDTOs)
+    //            {
+    //                int n = int.Parse(to.ObjectId);
+    //                if (n > 0 && n <= teleports.Length)
+    //                {
+    //                    InteractableTeleporter interactable = teleports[n - 1].gameObject.AddComponent<InteractableTeleporter>();
+    //                    interactable.Base = to;
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
+
+    //[HarmonyPatch(typeof(ServerListFormatter), nameof(ServerListFormatter.Serialize))]
+    //public class PlayerCountPatcher
+    //{
+    //    static void Prefix(ref JsonWriter writer, ServerListItem value, IJsonFormatterResolver formatterResolver)
+    //    {
+    //        if (AdvancedMERTools.Singleton.Config.UseExperimentalFeature)
+    //        {
+    //            if (int.TryParse(value.players, out int result))
+    //                value = new ServerListItem(value.serverId, value.ip, value.port, (result + 1 - ReferenceHub.AllHubs.Count(x => x.Mode == CentralAuth.ClientInstanceMode.DedicatedServer)).ToString(), value.info, value.pastebin, value.version, value.friendlyFire, value.modded, value.whitelist, value.officialCode);
+    //            else
+    //                ServerConsole.AddLog("Send folloing message to me. - Mujishung: " + value.players);
+    //        }
+    //    }
+    //}
 }
