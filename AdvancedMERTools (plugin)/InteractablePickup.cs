@@ -26,6 +26,7 @@ namespace AdvancedMERTools
             if (Pickup != null)
             {
                 AdvancedMERTools.Singleton.InteractablePickups.Add(this);
+                AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             }
             else
             {
@@ -55,9 +56,10 @@ namespace AdvancedMERTools
                         case IPActionType.PlayAnimation:
                             if (modules.Count == 0)
                             {
-                                modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
+                                modules = AnimationModule.GetModules(Base.AnimationModules, this.gameObject);
                                 if (modules.Count == 0)
                                 {
+                                    ServerConsole.AddLog("For some reason, it was failed to load animation file.");
                                     break;
                                 }
                             }
@@ -99,7 +101,7 @@ namespace AdvancedMERTools
                             DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
                             break;
                         case IPActionType.SendCommand:
-                            CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, pickup);
+                            Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.commandings), Formatter, player, pickup);
                             break;
                         case IPActionType.UpgradeItem:
                             if (player.GameObject.TryGetComponent<Collider>(out Collider col))
@@ -112,7 +114,7 @@ namespace AdvancedMERTools
                                         vs.Add(j);
                                     }
                                 }
-                                Scp914.Scp914Upgrader.Upgrade(new Collider[] { col }, Vector3.zero, Scp914.Scp914Mode.Held, (Scp914.Scp914KnobSetting)vs.RandomItem());
+                                Scp914.Scp914Upgrader.Upgrade(new Collider[] { col }, Scp914.Scp914Mode.Held, (Scp914.Scp914KnobSetting)vs.RandomItem());
                             }
                             break;
                         case IPActionType.GiveEffect:
