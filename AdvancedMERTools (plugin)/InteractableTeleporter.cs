@@ -26,6 +26,7 @@ namespace AdvancedMERTools
             if (transform.TryGetComponent<TeleportObject>(out TO))
             {
                 AdvancedMERTools.Singleton.InteractableTPs.Add(this);
+                AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             }
             else
             {
@@ -105,7 +106,7 @@ namespace AdvancedMERTools
                         //    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
                         //    break;
                         case IPActionType.SendCommand:
-                            CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, TO);
+                            Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.commandings), Formatter, player, TO);
                             break;
                         case IPActionType.GiveEffect:
                             EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
