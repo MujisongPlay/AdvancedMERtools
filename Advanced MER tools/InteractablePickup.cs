@@ -10,42 +10,17 @@ using Newtonsoft.Json;
 
 public class InteractablePickup : MonoBehaviour
 {
-    public InvokeType InvokeType;
-    public IPActionType ActionType;
-    public bool CancelActionWhenActive;
-    //[ShowIf("ActionType", IPActionType.PlayAnimation)]
-    //[ReorderableList]
-    public List<AnimationModule> AnimationModules;
-    //[ShowIf("ActionType", IPActionType.Explode)]
-    //[ReorderableList]
-    public List<ExplodeModule> ExplodeModules;
-    //[ShowIf("ActionType", IPActionType.Warhead)]
-    public WarheadActionType warheadAction;
-    //[ShowIf("ActionType", IPActionType.SendMessage)]
-    //[ReorderableList]
-    public List<MessageModule> MessageModules;
-    //[ShowIf("ActionType", IPActionType.DropItems)]
-    //[ReorderableList]
-    public List<DropItem> DropItems;
-    //[ShowIf("ActionType", IPActionType.SendCommand)]
-    //[ReorderableList]
-    [Header("There's many formats you can see when you put on curser to 'command context'")]
-    public List<Commanding> Commandings;
-    //[ShowIf("ActionType", IPActionType.UpgradeItem)]
-    public Scp914Mode Setting;
-    //[ShowIf("ActionType", IPActionType.GiveEffect)]
-    //[ReorderableList]
-    public List<EffectGivingModule> effectGivingModules;
+    public IPDTO data = new IPDTO();
 }
 
 [Serializable]
 public class IPDTO
 {
+    public bool Active;
     public InvokeType InvokeType;
     public IPActionType ActionType;
     public bool CancelActionWhenActive;
-    public string ObjectId;
-    public List<AnimationDTO> animationDTOs;
+    public List<AnimationDTO> AnimationModules;
     public WarheadActionType warheadActionType;
     public List<MessageModule> MessageModules;
     public List<DropItem> dropItems;
@@ -53,6 +28,10 @@ public class IPDTO
     public Scp914Mode Scp914Mode;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
+    [HideInInspector]
+    public string ObjectId;
+    [HideInInspector]
+    public int Code;
 }
 
 public class InteractablePickupCompiler
@@ -90,63 +69,16 @@ public class InteractablePickupCompiler
         {
             if (!ip.transform.TryGetComponent<PickupComponent>(out _))
             {
+                Debug.Log("Interactable Pickup can only be used as a component of Pickup!");
                 continue;
             }
-            IPDTO DTO = new IPDTO
+            ip.data.AnimationModules.ForEach(x => 
             {
-                ObjectId = PublicFunctions.FindPath(ip.transform),
-                ActionType = ip.ActionType,
-                InvokeType = ip.InvokeType,
-                CancelActionWhenActive = ip.CancelActionWhenActive
-            };
-            foreach (IPActionType type in Enum.GetValues(typeof(IPActionType)))
-            {
-                if (ip.ActionType.HasFlag(type))
-                {
-                    switch (type)
-                    {
-                        case IPActionType.Explode:
-                            DTO.ExplodeModules = ip.ExplodeModules;
-                            break;
-                        case IPActionType.DropItems:
-                            DTO.dropItems = ip.DropItems;
-                            break;
-                        case IPActionType.PlayAnimation:
-                            DTO.animationDTOs = new List<AnimationDTO> { };
-                            foreach (AnimationModule module in ip.AnimationModules)
-                            {
-                                DTO.animationDTOs.Add(new AnimationDTO
-                                {
-                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
-                                    Animation = module.AnimationName,
-                                    AnimationType = module.AnimationType,
-                                    ForceExecute = module.ForceExecute,
-                                    ChanceWeight = module.ChanceWeight
-                                });
-                            }
-                            break;
-                        case IPActionType.Warhead:
-                            DTO.warheadActionType = ip.warheadAction;
-                            break;
-                        case IPActionType.SendMessage:
-                            DTO.MessageModules = ip.MessageModules;
-                            break;
-                        case IPActionType.SendCommand:
-                            DTO.commandings = ip.Commandings;
-                            break;
-                        case IPActionType.UpgradeItem:
-                            DTO.Scp914Mode = ip.Setting;
-                            break;
-                        case IPActionType.GiveEffect:
-                            DTO.effectGivingModules = ip.effectGivingModules;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            interactables.Add(DTO);
+                x.AnimatorAdress = PublicFunctions.FindPath(x.Animator.transform);
+            });
+            ip.data.Code = ip.GetInstanceID();
+            ip.data.ObjectId = PublicFunctions.FindPath(ip.transform);
+            interactables.Add(ip.data);
         }
 
         string serializedData = JsonConvert.SerializeObject(interactables, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
