@@ -11,6 +11,7 @@ using Footprinting;
 using Exiled.CustomItems.API.Features;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
+using Mirror;
 
 namespace AdvancedMERTools
 {
@@ -18,17 +19,18 @@ namespace AdvancedMERTools
     public class HODTO : AMERTDTO
     {
         public float Health;
+        [Range(0, 100)]
         public int ArmorEfficient;
         public DeadType DeadType;
-        public float DeadDelay;
+        public float DeadActionDelay;
         public float ResetHPTo;
-        public List<AnimationDTO> animationDTOs;
-        public List<WhitelistWeapon> whitelistWeapons;
-        public WarheadActionType warheadActionType;
-        public List<MessageModule> messageModules;
-        public List<DropItem> dropItems;
         public bool DoNotDestroyAfterDeath;
-        public List<CommandModule> commandings;
+        public List<WhitelistWeapon> whitelistWeapons;
+        public List<AnimationDTO> AnimationModules;
+        public WarheadActionType warheadAction;
+        public List<MessageModule> MessageModules;
+        public List<DropItem> DropItems;
+        public List<Commanding> Commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
     }
@@ -41,8 +43,7 @@ namespace AdvancedMERTools
         public List<AnimationDTO> animationDTOs;
         public WarheadActionType warheadActionType;
         public List<MessageModule> MessageModules;
-        //public List<DropItem> dropItems;
-        public List<CommandModule> commandings;
+        public List<Commanding> commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
     }
@@ -53,11 +54,11 @@ namespace AdvancedMERTools
         public InvokeType InvokeType;
         public IPActionType ActionType;
         public bool CancelActionWhenActive;
-        public List<AnimationDTO> animationDTOs;
+        public List<AnimationDTO> AnimationModules;
         public WarheadActionType warheadActionType;
         public List<MessageModule> MessageModules;
         public List<DropItem> dropItems;
-        public List<CommandModule> commandings;
+        public List<Commanding> commandings;
         public Scp914Mode Scp914Mode;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
@@ -69,28 +70,86 @@ namespace AdvancedMERTools
         public ColliderActionType ColliderActionType;
         public CollisionType CollisionType;
         public DetectType DetectType;
-        //public bool Invisible;
-        //public float ContactOffSet;
-        public float Amount;
-        public List<AnimationDTO> animationDTOs;
+        public float ModifyHealthAmount;
+        public List<AnimationDTO> AnimationModules;
         public WarheadActionType warheadActionType;
         public List<MessageModule> MessageModules;
         public List<DropItem> dropItems;
-        public List<CommandModule> commandings;
+        public List<Commanding> commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
     }
 
     [Serializable]
-    public class AMERTDTO
+    public class GNDTO : AMERTDTO
     {
+        public List<GMDTO> GMDTOs;
+    }
+
+    [Serializable]
+    public class CDDTO : AMERTDTO
+    {
+        public DoorType DoorType;
+        public string animator;
+        public string OpenAnimation;
+        public string CloseAnimation;
+        public string LockAnimation;
+        public string UnlockAnimation;
+        public string BrokenAnimation;
+        public Vector3 DoorInstallPos;
+        public Vector3 DoorInstallRot;
+        public Vector3 DoorInstallScl;
+        public KeycardPermissions DoorPermissions;
+        public float DoorHealth;
+        public Interactables.Interobjects.DoorUtils.DoorDamageType DoorDamageType;
+    }
+
+    [Serializable]
+    public class DGDTO
+    {
+        public float Health;
+        public Interactables.Interobjects.DoorUtils.DoorDamageType DamagableDamageType;
+        public KeycardPermissions KeycardPermissions;
         public string ObjectId;
     }
 
     [Serializable]
-    public class AMERTInteractable : MonoBehaviour
+    public class GMDTO : RandomExecutionModule
     {
+        public List<int> codes;
+        public bool Enable;
+
+        public override void Execute(params object[] args)
+        {
+            List<GMDTO> gs = args[0] as List<GMDTO>;
+            foreach (GMDTO mDTO in gs)
+            {
+                MEC.Timing.CallDelayed(mDTO.ActionDelay, () => 
+                {
+                    mDTO.codes.ForEach(x => AdvancedMERTools.Singleton.codeClassPair[x].Active = mDTO.Enable);
+                });
+            }
+        }
+    }
+
+    [Serializable]
+    public class AMERTDTO
+    {
+        public bool Active;
+        public string ObjectId;
+        public int Code;
+    }
+
+    [Serializable]
+    public class AMERTInteractable : NetworkBehaviour
+    {
+        void Start()
+        {
+            Active = Base.Active;
+        }
+
         public AMERTDTO Base;
+        public bool Active;
     }
 
     [Flags]
@@ -124,6 +183,17 @@ namespace AdvancedMERTools
         Projectile = 4
     }
 
+    namespace AMERT
+    {
+        [Serializable]
+        public enum DoorType : int
+        {
+            LCZ = 0,
+            HCZ = 1,
+            EZ = 2
+        }
+    }
+
     [Serializable]
     public class EffectGivingModule : RandomExecutionModule
     {
@@ -140,27 +210,30 @@ namespace AdvancedMERTools
 
             foreach (EffectGivingModule module in modules)
             {
-                List<Player> list = new List<Player> { };
-                if (module.GivingTo.HasFlag(SendType.Interactor))
-                    list.Add(hub);
-                if (module.GivingTo.HasFlag(SendType.AllExceptAboveOne))
-                    list.AddRange(Player.List.Where(x => x != hub));
-                if (module.GivingTo.HasFlag(SendType.Alive))
-                    list.AddRange(Player.List.Where(x => x.IsAlive));
-                if (module.GivingTo.HasFlag(SendType.Spectators))
-                    list.AddRange(Player.List.Where(x => !x.IsAlive));
-                list = Player.List.Where(x => list.Contains(x)).ToList();
-
-                foreach (Player player in list)
+                MEC.Timing.CallDelayed(module.ActionDelay, () => 
                 {
-                    if (module.EffectFlag.HasFlag(EffectFlag.Disable))
-                        player.DisableEffect(module.effectType);
-                    else if (module.EffectFlag.HasFlag(EffectFlag.Enable))
+                    List<Player> list = new List<Player> { };
+                    if (module.GivingTo.HasFlag(SendType.Interactor))
+                        list.Add(hub);
+                    if (module.GivingTo.HasFlag(SendType.AllExceptAboveOne))
+                        list.AddRange(Player.List.Where(x => x != hub));
+                    if (module.GivingTo.HasFlag(SendType.Alive))
+                        list.AddRange(Player.List.Where(x => x.IsAlive));
+                    if (module.GivingTo.HasFlag(SendType.Spectators))
+                        list.AddRange(Player.List.Where(x => !x.IsAlive));
+                    list = Player.List.Where(x => list.Contains(x)).ToList();
+
+                    foreach (Player player in list)
                     {
-                        byte intensity = (byte)((module.EffectFlag.HasFlag(EffectFlag.ModifyIntensity) ? player.GetEffect(module.effectType).Intensity : 0) + module.Inensity);
-                        player.EnableEffect(module.effectType, intensity, module.Duration, module.EffectFlag.HasFlag(EffectFlag.ModifyDuration));
+                        if (module.EffectFlag.HasFlag(EffectFlag.Disable))
+                            player.DisableEffect(module.effectType);
+                        else if (module.EffectFlag.HasFlag(EffectFlag.Enable))
+                        {
+                            byte intensity = (byte)((module.EffectFlag.HasFlag(EffectFlag.ModifyIntensity) ? player.GetEffect(module.effectType).Intensity : 0) + module.Inensity);
+                            player.EnableEffect(module.effectType, intensity, module.Duration, module.EffectFlag.HasFlag(EffectFlag.ModifyDuration));
+                        }
                     }
-                }
+                });
             }
         }
     }
@@ -177,12 +250,16 @@ namespace AdvancedMERTools
             List<ExplodeModule> modules = args[0] as List<ExplodeModule>;
             Transform transform = args[1] as Transform;
             ReferenceHub hub = args[2] as ReferenceHub;
+            ReferenceHub.TryGetLocalHub(out ReferenceHub local);
             foreach (ExplodeModule module in modules)
             {
-                if (module.EffectOnly)
-                    ExplosionUtils.ServerSpawnEffect(transform.TransformPoint(module.LocalPosition), ItemType.GrenadeHE);
-                else
-                    ExplosionUtils.ServerExplode(transform.TransformPoint(module.LocalPosition), module.FFon ? new Footprint(ReferenceHub.LocalHub) : new Footprint(hub));
+                MEC.Timing.CallDelayed(module.ActionDelay, () => 
+                {
+                    if (module.EffectOnly)
+                        ExplosionUtils.ServerSpawnEffect(transform.TransformPoint(module.LocalPosition), ItemType.GrenadeHE);
+                    else
+                        ExplosionUtils.ServerExplode(transform.TransformPoint(module.LocalPosition), module.FFon ? new Footprint(local) : new Footprint(hub), ExplosionType.Grenade);
+                });
             }
         }
     }
@@ -209,50 +286,53 @@ namespace AdvancedMERTools
             Player interactor = args[2] as Player;
             foreach (MessageModule module in messages)
             {
-                string Content = module.MessageContent;
-                foreach (string v in pairs.Keys)
+                MEC.Timing.CallDelayed(module.ActionDelay, () => 
                 {
+                    string Content = module.MessageContent;
+                    foreach (string v in pairs.Keys)
+                    {
+                        try
+                        {
+                            Content = Content.Replace(v, pairs[v]((object[])args.Skip(2).ToArray()));
+                        }
+                        catch (Exception _) { }
+                    }
                     try
                     {
-                        Content = Content.Replace(v, pairs[v]((object[])args.Skip(2).ToArray()));
+                        Content = ServerConsole.singleton.NameFormatter.ProcessExpression(Content);
                     }
-                    catch (Exception _) { }
-                }
-                try
-                {
-                    Content = ServerConsole.singleton.NameFormatter.ProcessExpression(Content);
-                }
-                catch (Exception e) { }
-                if (module.MessageType == MessageType.Cassie)
-                {
-                    Cassie.Message(Content);
-                }
-                else
-                {
-                    List<Player> targets = new List<Player> { };
-                    if (module.SendType.HasFlag(SendType.AllExceptAboveOne))
-                        targets.AddRange(Player.List.Where(x => x != interactor));
-                    if (module.SendType.HasFlag(SendType.Spectators))
-                        targets.AddRange(Player.List.Where(x => !x.IsAlive));
-                    if (module.SendType.HasFlag(SendType.Alive))
-                        targets.AddRange(Player.List.Where(x => x.IsAlive));
-                    if (module.SendType.HasFlag(SendType.Interactor))
-                        targets.Add(interactor);
-
-                    targets = Player.List.Where(x => targets.Contains(x)).ToList();
-
-                    foreach (Player p in targets)
+                    catch (Exception e) { }
+                    if (module.MessageType == MessageType.Cassie)
                     {
-                        if (module.MessageType == MessageType.BroadCast)
+                        Cassie.Message(Content);
+                    }
+                    else
+                    {
+                        List<Player> targets = new List<Player> { };
+                        if (module.SendType.HasFlag(SendType.AllExceptAboveOne))
+                            targets.AddRange(Player.List.Where(x => x != interactor));
+                        if (module.SendType.HasFlag(SendType.Spectators))
+                            targets.AddRange(Player.List.Where(x => !x.IsAlive));
+                        if (module.SendType.HasFlag(SendType.Alive))
+                            targets.AddRange(Player.List.Where(x => x.IsAlive));
+                        if (module.SendType.HasFlag(SendType.Interactor))
+                            targets.Add(interactor);
+
+                        targets = Player.List.Where(x => targets.Contains(x)).ToList();
+
+                        foreach (Player p in targets)
                         {
-                            p.Broadcast((ushort)Math.Round(module.Duration), Content);
-                        }
-                        else
-                        {
-                            p.ShowHint(Content, module.Duration);
+                            if (module.MessageType == MessageType.BroadCast)
+                            {
+                                p.Broadcast((ushort)Math.Round(module.Duration), Content);
+                            }
+                            else
+                            {
+                                p.ShowHint(Content, module.Duration);
+                            }
                         }
                     }
-                }
+                });
             }
         }
     }
@@ -292,9 +372,14 @@ namespace AdvancedMERTools
     [Serializable]
     public class AnimationDTO : RandomExecutionModule
     {
-        public string Animator;
-        public string Animation;
+        [HideInInspector]
+        public string AnimatorAdress;
+        public string AnimationName;
         public AnimationType AnimationType;
+        public ParameterType ParameterType;
+        public string ParameterName;
+        [Header("If parameter type is bool or trigger, input 0 for false, and input 1 for true.")]
+        public string ParameterValue;
     }
 
     [Serializable]
@@ -303,22 +388,46 @@ namespace AdvancedMERTools
         public Animator Animator;
         public string AnimationName;
         public AnimationType AnimationType;
+        public ParameterType ParameterType;
+        public string ParameterName;
+        public string ParameterValue;
 
         public override void Execute(params object[] args)
         {
             List<AnimationModule> modules = args[0] as List<AnimationModule>;
             foreach (AnimationModule module in modules)
             {
-                if (module.Animator != null)
+                MEC.Timing.CallDelayed(module.ActionDelay, () =>
                 {
-                    if (module.AnimationType == AnimationType.Start)
+                    if (module.Animator != null)
                     {
-                        module.Animator.Play(module.AnimationName);
-                        module.Animator.speed = 1f;
+                        if (module.AnimationType == AnimationType.Start)
+                        {
+                            module.Animator.Play(module.AnimationName);
+                            module.Animator.speed = 1f;
+                        }
+                        else if (module.AnimationType == AnimationType.Stop)
+                            module.Animator.speed = 0f;
+                        else
+                        {
+                            switch (module.ParameterType)
+                            {
+                                case ParameterType.Bool:
+                                    module.Animator.SetBool(module.ParameterName, module.ParameterValue == "1");
+                                    break;
+                                case ParameterType.Float:
+                                    module.Animator.SetFloat(module.ParameterName, float.Parse(module.ParameterValue));
+                                    break;
+                                case ParameterType.Integer:
+                                    module.Animator.SetInteger(module.ParameterName, int.Parse(module.ParameterValue));
+                                    break;
+                                case ParameterType.Trigger:
+                                    module.Animator.SetTrigger(module.ParameterName);
+                                    break;
+                            }
+                        }
                     }
-                    else
-                        module.Animator.speed = 0f;
-                }
+                });
             }
         }
 
@@ -327,7 +436,7 @@ namespace AdvancedMERTools
             List<AnimationModule> modules = new List<AnimationModule> { };
             foreach (AnimationDTO dTO in list)
             {
-                if (!EventManager.FindObjectWithPath(gameObject.GetComponentInParent<SchematicObject>().transform, dTO.Animator).TryGetComponent(out Animator animator))
+                if (!EventManager.FindObjectWithPath(gameObject.GetComponentInParent<SchematicObject>().transform, dTO.AnimatorAdress).TryGetComponent(out Animator animator))
                 {
                     ServerConsole.AddLog("Cannot find appopriate animator!");
                     continue;
@@ -335,10 +444,14 @@ namespace AdvancedMERTools
                 modules.Add(new AnimationModule
                 {
                     Animator = animator,
-                    AnimationName = dTO.Animation,
+                    AnimationName = dTO.AnimationName,
                     AnimationType = dTO.AnimationType,
                     ChanceWeight = dTO.ChanceWeight,
-                    ForceExecute = dTO.ForceExecute
+                    ForceExecute = dTO.ForceExecute,
+                    ActionDelay = dTO.ActionDelay,
+                    ParameterName = dTO.ParameterName,
+                    ParameterType = dTO.ParameterType,
+                    ParameterValue = dTO.ParameterValue
                 });
             }
             return modules;
@@ -390,6 +503,7 @@ namespace AdvancedMERTools
     {
         public float ChanceWeight;
         public bool ForceExecute;
+        public float ActionDelay;
 
         public static RandomExecutionModule GetSingleton<T>() where T : RandomExecutionModule, new()
         {
@@ -430,7 +544,17 @@ namespace AdvancedMERTools
     public enum AnimationType
     {
         Start,
-        Stop
+        Stop,
+        ModifyParameter
+    }
+
+    [Serializable]
+    public enum ParameterType
+    {
+        Integer,
+        Float,
+        Bool,
+        Trigger
     }
 
     [Flags]
@@ -478,21 +602,24 @@ namespace AdvancedMERTools
 
             foreach (DropItem item in items)
             {
-                Vector3 vector3 = transform.TransformPoint(item.DropLocalPosition);
-                if (item.CustomItemId != 0 && CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
+                MEC.Timing.CallDelayed(item.ActionDelay, () => 
                 {
-                    for (int i = 0; i < item.Count; i++)
+                    Vector3 vector3 = transform.TransformPoint(item.DropLocalPosition);
+                    if (item.CustomItemId != 0 && CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
                     {
-                        custom.Spawn(vector3);
+                        for (int i = 0; i < item.Count; i++)
+                        {
+                            custom.Spawn(vector3);
+                        }
                     }
-                }
-                else
-                {
-                    for (int i = 0; i < item.Count; i++)
+                    else
                     {
-                        Item.Create(item.ItemType).CreatePickup(vector3);
+                        for (int i = 0; i < item.Count; i++)
+                        {
+                            Item.Create(item.ItemType).CreatePickup(vector3);
+                        }
                     }
-                }
+                });
             }
         }
     }
@@ -515,28 +642,31 @@ namespace AdvancedMERTools
     }
 
     [Serializable]
-    public class CommandModule : RandomExecutionModule
+    public class Commanding : RandomExecutionModule
     {
         public string CommandContext;
 
         public override void Execute(params object[] args)
         {
-            List<CommandModule> modules = args[0] as List<CommandModule>;
+            List<Commanding> modules = args[0] as List<Commanding>;
             Dictionary<string, Func<object[], string>> pairs = args[1] as Dictionary<string, Func<object[], string>>;
 
-            foreach (CommandModule module in modules)
+            foreach (Commanding module in modules)
             {
-                string Content = module.CommandContext;
-                foreach (string v in pairs.Keys)
+                MEC.Timing.CallDelayed(module.ActionDelay, () => 
                 {
-                    try
+                    string Content = module.CommandContext;
+                    foreach (string v in pairs.Keys)
                     {
-                        Content = Content.Replace(v, pairs[v]((object[])args.Skip(2).ToArray()));
+                        try
+                        {
+                            Content = Content.Replace(v, pairs[v]((object[])args.Skip(2).ToArray()));
+                        }
+                        catch (Exception e) { }
                     }
-                    catch (Exception e) { }
-                }
-                Content = ServerConsole.singleton.NameFormatter.ProcessExpression(Content);
-                AdvancedMERTools.ExecuteCommand(Content);
+                    Content = ServerConsole.singleton.NameFormatter.ProcessExpression(Content);
+                    AdvancedMERTools.ExecuteCommand(Content);
+                });
             }
         }
     }
