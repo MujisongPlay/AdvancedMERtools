@@ -15,23 +15,23 @@ namespace AdvancedMERTools
     {
         public bool IsEnabled { get; set; } = true;
         public bool Debug { get; set; } = false;
-        public bool ReplacementMode { get; set; } = true;
-        public List<string> DummyDoorInstallingMaps { get; set; } = new List<string>
-        {
-            "ExampleMap"
-        };
-        [Description("Below index means the door numbering that do not require dummy door installing. Caution: It's double List. - (Above Map Index) - (Door Index)")]
-        public List<List<int>> BlackListOfDummyDoor { get; set; } = new List<List<int>>
-        {
-            new List<int>
-            {
-                101
-            },
-            new List<int>
-            {
-                15
-            }
-        };
+        //public bool ReplacementMode { get; set; } = true;
+        //public List<string> DummyDoorInstallingMaps { get; set; } = new List<string>
+        //{
+        //    "ExampleMap"
+        //};
+        //[Description("Below index means the door numbering that do not require dummy door installing. Caution: It's double List. - (Above Map Index) - (Door Index)")]
+        //public List<List<int>> BlackListOfDummyDoor { get; set; } = new List<List<int>>
+        //{
+        //    new List<int>
+        //    {
+        //        101
+        //    },
+        //    new List<int>
+        //    {
+        //        15
+        //    }
+        //};
         public Dictionary<string, List<GateSerializable>> Gates { get; set; } = new Dictionary<string, List<GateSerializable>>
         {
             { "ExampleMapName", new List<GateSerializable> { new GateSerializable(), new GateSerializable() } }
@@ -48,7 +48,7 @@ namespace AdvancedMERTools
         //[Description("If you build doors with external-plugin not MER, use this option.")]
         //public bool AutoRunWithEveryDoor { get; set; } = false;
         public bool CustomSpawnPointEnable { get; set; } = true;
-        public bool UseExperimentalFeature { get; set; } = false;
+        //public bool UseExperimentalFeature { get; set; } = false;
 
         [Serializable]
         public enum EventList
