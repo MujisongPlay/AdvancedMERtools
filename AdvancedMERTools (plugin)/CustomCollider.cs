@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -27,6 +27,7 @@ namespace AdvancedMERTools
         {
             this.Base = base.Base as CCDTO;
             AdvancedMERTools.Singleton.CustomColliders.Add(this);
+            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             CustomCollider[] customColliders = gameObject.GetComponents<CustomCollider>();
             if (customColliders.Length > 1 && customColliders[0] != this)
             {
@@ -140,10 +141,10 @@ namespace AdvancedMERTools
                         case ColliderActionType.ModifyHealth:
                             if (target != null)
                             {
-                                if (Base.Amount > 0)
-                                    target.Heal(Base.Amount);
+                                if (Base.ModifyHealthAmount > 0)
+                                    target.Heal(Base.ModifyHealthAmount);
                                 else
-                                    target.Hurt(-1 * Base.Amount);
+                                    target.Hurt(-1 * Base.ModifyHealthAmount);
                             }
                             break;
                         case ColliderActionType.Explode:
@@ -152,7 +153,7 @@ namespace AdvancedMERTools
                         case ColliderActionType.PlayAnimation:
                             if (modules.Count == 0)
                             {
-                                modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
+                                modules = AnimationModule.GetModules(Base.AnimationModules, this.gameObject);
                                 if (modules.Count == 0)
                                 {
                                     break;
@@ -193,7 +194,7 @@ namespace AdvancedMERTools
                             MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, target, gameObject);
                             break;
                         case ColliderActionType.SendCommand:
-                            CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, target, gameObject);
+                            Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.commandings), Formatter, target, gameObject);
                             break;
                         case ColliderActionType.GiveEffect:
                             EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), target);
