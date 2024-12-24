@@ -55,15 +55,21 @@ namespace AdvancedMERTools
 
         public List<DummyGate> dummyGates = new List<DummyGate> { };
 
+        public List<GroovyNoise> groovyNoises = new List<GroovyNoise> { };
+
+        public List<CustomDoor> customDoors = new List<CustomDoor> { };
+
+        public Dictionary<int, AMERTInteractable> codeClassPair = new Dictionary<int, AMERTInteractable> { };
+
         public Dictionary<Type, RandomExecutionModule> TypeSingletonPair = new Dictionary<Type, RandomExecutionModule> { };
 
         public override void OnEnabled()
         {
+            //ServerConsole.AddLog("\t\t!!!!");
             Singleton = this;
             manager = new EventManager();
             Harmony harmony = new Harmony("AMERT");
             harmony.PatchAll();
-
             Register();
         }
 
@@ -190,7 +196,7 @@ namespace AdvancedMERTools
 
         public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
         {
-            ev.RaycastHit.collider.transform.GetComponentsInParent<HealthObject>().ForEach(x => x.OnShot(ev));
+            //ev.RaycastHit.collider.transform.GetComponentsInParent<HealthObject>().ForEach(x => x.OnShot(ev));
         }
 
         //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
@@ -211,7 +217,7 @@ namespace AdvancedMERTools
             //        continue;
             //    }
             //}
-            AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
+            //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
 
         public void OnItemSearching(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
@@ -266,35 +272,35 @@ namespace AdvancedMERTools
         public void OnLoadMap(MapEditorReborn.Events.EventArgs.LoadingMapEventArgs ev)
         {
             if (!ev.IsAllowed) return;
-            int index = config.DummyDoorInstallingMaps.IndexOf(ev.NewMap.Name);
-            if (index != -1 && ev.NewMap.Doors.Count != 0)
-            {
-                bool flag = config.BlackListOfDummyDoor.TryGet<List<int>>(index, out List<int> element);
-                for (int i = 0; i < ev.NewMap.Doors.Count; i++)
-                {
-                    if (flag)
-                    {
-                        if (element.Contains(i))
-                        {
-                            continue;
-                        }
-                    }
-                    string str = "DoorLCZ";
-                    switch (ev.NewMap.Doors[i].DoorType)
-                    {
-                        case DoorType.HeavyContainmentDoor:
-                            str = "DoorHCZ";
-                            break;
-                        case DoorType.EntranceDoor:
-                            str = "DoorEZ";
-                            break;
-                    }
-                    SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, ev.NewMap.Doors[i].Position, Quaternion.Euler(ev.NewMap.Doors[i].Rotation), isStatic: false);
-                    DummyDoor door = @object.gameObject.AddComponent<DummyDoor>();
-                    door.door = ev.NewMap.Doors[i];
-                    AdvancedMERTools.Singleton.dummyDoors.Add(door);
-                }
-            }
+            //int index = config.DummyDoorInstallingMaps.IndexOf(ev.NewMap.Name);
+            //if (index != -1 && ev.NewMap.Doors.Count != 0)
+            //{
+            //    bool flag = config.BlackListOfDummyDoor.TryGet<List<int>>(index, out List<int> element);
+            //    for (int i = 0; i < ev.NewMap.Doors.Count; i++)
+            //    {
+            //        if (flag)
+            //        {
+            //            if (element.Contains(i))
+            //            {
+            //                continue;
+            //            }
+            //        }
+            //        string str = "DoorLCZ";
+            //        switch (ev.NewMap.Doors[i].DoorType)
+            //        {
+            //            case DoorType.HeavyContainmentDoor:
+            //                str = "DoorHCZ";
+            //                break;
+            //            case DoorType.EntranceDoor:
+            //                str = "DoorEZ";
+            //                break;
+            //        }
+            //        SchematicObject @object = MapEditorReborn.API.Features.ObjectSpawner.SpawnSchematic(str, ev.NewMap.Doors[i].Position, Quaternion.Euler(ev.NewMap.Doors[i].Rotation), isStatic: false);
+            //        DummyDoor door = @object.gameObject.AddComponent<DummyDoor>();
+            //        door.door = ev.NewMap.Doors[i];
+            //        AdvancedMERTools.Singleton.dummyDoors.Add(door);
+            //    }
+            //}
         }
 
         public void OnTeleport(MapEditorReborn.Events.EventArgs.TeleportingEventArgs ev)
@@ -313,6 +319,7 @@ namespace AdvancedMERTools
             {
                 ev.Schematic.gameObject.AddComponent<DummyGate>();
             }
+            DataLoad<GNDTO, GroovyNoise>("GroovyNoises", ev);
             DataLoad<HODTO, HealthObject>("HealthObjects", ev);
             DataLoad<IPDTO, InteractablePickup>("Pickups", ev);
             DataLoad<CCDTO, CustomCollider>("Colliders", ev);
@@ -320,6 +327,8 @@ namespace AdvancedMERTools
 
         public void DataLoad<Tdto, Tclass>(string name, MapEditorReborn.Events.EventArgs.SchematicSpawnedEventArgs ev) where Tdto : AMERTDTO where Tclass : AMERTInteractable, new()
         {
+            //ServerConsole.AddLog(ev.Schematic.DirectoryPath);
+            //ServerConsole.AddLog(ev.Schematic.Base.SchematicName);
             string path = Path.Combine(ev.Schematic.DirectoryPath, ev.Schematic.Base.SchematicName + $"-{name}.json");
             if (File.Exists(path))
             {
@@ -329,6 +338,8 @@ namespace AdvancedMERTools
                     Transform target = FindObjectWithPath(ev.Schematic.transform, dto.ObjectId);
                     Tclass tclass = target.gameObject.AddComponent<Tclass>();
                     tclass.Base = dto;
+                    if (AdvancedMERTools.Singleton.groovyNoises.Any(x => x.Base.GMDTOs.Select(y => y.codes).Any(y => y.Contains(dto.Code))))
+                        tclass.Active = false;
                 }
             }
         }
@@ -342,7 +353,7 @@ namespace AdvancedMERTools
                 {
                     if (target.childCount == 0 || target.childCount <= int.Parse(path[i].ToString()))
                     {
-                        ServerLogs.AddLog(ServerLogs.Modules.Logger, "Advanced MER tools: Could not find appropriate child!", ServerLogs.ServerLogType.RemoteAdminActivity_Misc);
+                        ServerLogs.AddLog(ServerLogs.Modules.Administrative, "Advanced MER tools: Could not find appropriate child!", ServerLogs.ServerLogType.RemoteAdminActivity_Misc);
                         break;
                     }
                     target = target.GetChild(int.Parse(path[i]));
@@ -359,6 +370,8 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.dummyGates.Clear();
             AdvancedMERTools.Singleton.InteractableTPs.Clear();
             AdvancedMERTools.Singleton.CustomColliders.Clear();
+            AdvancedMERTools.Singleton.groovyNoises.Clear();
+            AdvancedMERTools.Singleton.codeClassPair.Clear();
             //if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
             //{
             //    AutoRun();
