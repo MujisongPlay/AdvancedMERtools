@@ -16,66 +16,170 @@ using MapEditorReborn.API.Features.Objects;
 using InventorySystem.Items.Firearms.Modules;
 using InventorySystem.Items.ThrowableProjectiles;
 using AdminToys;
+using PlayerStatsSystem;
+using Mirror;
 
 namespace AdvancedMERTools
 {
-    public class HealthObject : AMERTInteractable
+    public class Healther : NetworkBehaviour, IDestructible
+    {
+        public uint NetworkId 
+        {
+            get
+            {
+                return base.netId;
+            }
+        }
+
+        public Vector3 CenterOfMass 
+        {
+            get
+            {
+                return Vector3.zero;
+            }
+        }
+
+        public bool Damage(float damage, DamageHandlerBase handler, Vector3 exactHitPos)
+        {
+            //ServerConsole.AddLog("!!!");
+            return parent.Damage(damage, handler, exactHitPos);
+        }
+
+        public HealthObject parent;
+    }
+
+    public class HealthObject : AMERTInteractable, IDestructible
     {
         private void Start()
         {
             this.Base = base.Base as HODTO;
             Health = Base.Health;
+            //ServerConsole.AddLog("!");
+            //transform.GetComponentsInChildren<Transform>().ForEach(x => x.gameObject.layer = LayerMask.GetMask("Glass"));
+            this.transform.GetComponentsInChildren<PrimitiveObjectToy>().ForEach(x => 
+            {
+                Healther healther = x.gameObject.AddComponent<Healther>();
+                healther.parent = this;
+            });
             AdvancedMERTools.Singleton.healthObjects.Add(this);
+            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
         }
 
-        public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
+        static Dictionary<ExplosionType, ItemType> ExplosionDic = new Dictionary<ExplosionType, ItemType>
         {
-            if (!ev.CanHurt || ev.Player == null || !IsAlive || !(ev.Player.CurrentItem is Firearm)) return;
-            if (Base.whitelistWeapons.Count != 0)
+            { ExplosionType.Grenade, ItemType.GrenadeHE },
+            { ExplosionType.Disruptor, ItemType.ParticleDisruptor },
+            { ExplosionType.Jailbird, ItemType.Jailbird },
+            { ExplosionType.Cola, ItemType.SCP207 },
+            { ExplosionType.PinkCandy, ItemType.SCP330 },
+            { ExplosionType.SCP018, ItemType.SCP018 }
+        };
+
+        public bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
+        {
+            //ServerConsole.AddLog("1");
+            Player attacker = null;
+            AttackerDamageHandler damageHandler = handler as AttackerDamageHandler;
+            if (damageHandler != null)
             {
-                if (CustomItem.TryGet(ev.Player.CurrentItem, out CustomItem custom))
+                //ServerConsole.AddLog("2");
+                attacker = Player.Get(damageHandler.Attacker);
+                FirearmDamageHandler firearm = handler as FirearmDamageHandler;
+                ExplosionDamageHandler explosion = handler as ExplosionDamageHandler;
+                if (firearm != null)
                 {
-                    if (Base.whitelistWeapons.Find(x => x.CustomItemId == custom.Id) == null) return;
+                    //ServerConsole.AddLog("3");
+                    if (Base.whitelistWeapons.Count == 0 || Base.whitelistWeapons.Any(x =>
+                    {
+                        if (CustomItem.TryGet(attacker.CurrentItem, out CustomItem custom))
+                        {
+                            return custom.Id == x.CustomItemId;
+                        }
+                        else
+                        {
+                            return attacker.CurrentItem.Type == x.ItemType;
+                        }
+                    }))
+                    {
+                        //ServerConsole.AddLog("4");
+                        FieldInfo info = typeof(FirearmDamageHandler).GetField("_penetration", BindingFlags.NonPublic | BindingFlags.Instance);
+                        damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, Mathf.RoundToInt((float)info.GetValue(firearm) * 100f));
+                    }
+                    else
+                        return false;
                 }
-                else
+                //ServerConsole.AddLog("5");
+                if (explosion != null)
                 {
-                    if (Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ev.Player.CurrentItem.Type) == null) return;
+                    if (Base.whitelistWeapons.Count != 0 && !Base.whitelistWeapons.Any(x =>
+                    {
+                        if (ExplosionDic.TryGetValue(explosion.ExplosionType, out ItemType item))
+                        {
+                            return item == x.ItemType;
+                        }
+                        return false;
+                    }))
+                    {
+                        return false;
+                    }
                 }
+                //ServerConsole.AddLog("6");
             }
-            Firearm firearm = ev.Player.CurrentItem as Firearm;
-            float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
-            if (firearm.Type == ItemType.GunShotgun && firearm.Base is InventorySystem.Items.Firearms.Shotgun)
-            {
-                //damage /= (firearm.Base.ActionModule as PumpAction).LastFiredAmount * 8;
-                //FieldInfo info = typeof(BuckshotHitreg).GetField("_buckshotSettingsProvider", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-                //damage /= ((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
-                PropertyInfo info = typeof(BuckshotHitreg).GetProperty("CurBuckshotSettings", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-                damage /= (float)((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
-            }
-            Health -= damage;
-            Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
-            CheckDead(ev.Player, damage);
+            //ServerConsole.AddLog("7");
+            CheckDead(attacker, damage);
+            return true;
         }
 
-        public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
-        {
-            if (!ev.IsAllowed || !IsAlive) return;
-            if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ItemType.GrenadeHE) == null) return;
-            if (ev.Projectile.Type == ItemType.GrenadeHE)
-            {
-                float Dis = Vector3.Distance(this.transform.position, ev.Position);
-                FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-                float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
-                damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
-                ServerConsole.AddLog(damage.ToString());
-                if (ev.Player != null) Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
-                Health -= damage;
-                CheckDead(ev.Player, damage);
-            }
-        }
+        //public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
+        //{
+        //    if (!ev.CanHurt || ev.Player == null || !IsAlive || !(ev.Player.CurrentItem is Firearm)) return;
+        //    if (Base.whitelistWeapons.Count != 0)
+        //    {
+        //        if (CustomItem.TryGet(ev.Player.CurrentItem, out CustomItem custom))
+        //        {
+        //            if (Base.whitelistWeapons.Find(x => x.CustomItemId == custom.Id) == null) return;
+        //        }
+        //        else
+        //        {
+        //            if (Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ev.Player.CurrentItem.Type) == null) return;
+        //        }
+        //    }
+        //    Firearm firearm = ev.Player.CurrentItem as Firearm;
+        //    float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
+        //    if (firearm.Type == ItemType.GunShotgun && firearm.Base is InventorySystem.Items.Firearms.)
+        //    {
+        //        //damage /= (firearm.Base.ActionModule as PumpAction).LastFiredAmount * 8;
+        //        //FieldInfo info = typeof(BuckshotHitreg).GetField("_buckshotSettingsProvider", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+        //        //damage /= ((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
+        //        PropertyInfo info = typeof(BuckshotHitreg).GetProperty("CurBuckshotSettings", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+        //        damage /= (float)((BuckshotHitreg.)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
+        //    }
+        //    Health -= damage;
+        //    Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
+        //    CheckDead(ev.Player, damage);
+        //}
+
+        //public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
+        //{
+        //    if (!ev.IsAllowed || !IsAlive) return;
+        //    if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ItemType.GrenadeHE) == null) return;
+        //    if (ev.Projectile.Type == ItemType.GrenadeHE)
+        //    {
+        //        float Dis = Vector3.Distance(this.transform.position, ev.Position);
+        //        FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+        //        float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
+        //        damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
+        //        //ServerConsole.AddLog(damage.ToString());
+        //        if (ev.Player != null && damage > 0) Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
+        //        Health -= damage;
+        //        CheckDead(ev.Player, damage);
+        //    }
+        //}
 
         public void CheckDead(Player player, float damage)
         {
+            Health -= damage;
+            Hitmarker.SendHitmarkerDirectly(player.ReferenceHub, damage / 10f);
             if (Health <= 0)
             {
                 HODTO clone = new HODTO
@@ -87,7 +191,7 @@ namespace AdvancedMERTools
                 };
                 IsAlive = false;
                 EventHandler.OnHealthObjectDead(new HealthObjectDeadEventArgs(clone, player));
-                MEC.Timing.CallDelayed(Base.DeadDelay, () =>
+                MEC.Timing.CallDelayed(Base.DeadActionDelay, () =>
                 {
                     foreach (DeadType type in Enum.GetValues(typeof(DeadType)))
                     {
@@ -115,7 +219,7 @@ namespace AdvancedMERTools
                                 case DeadType.PlayAnimation:
                                     if (modules.Count == 0)
                                     {
-                                        modules = AnimationModule.GetModules(Base.animationDTOs, this.gameObject);
+                                        modules = AnimationModule.GetModules(Base.AnimationModules, this.gameObject);
                                         if (modules.Count == 0)
                                         {
                                             break;
@@ -126,7 +230,7 @@ namespace AdvancedMERTools
                                 case DeadType.Warhead:
                                     foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
                                     {
-                                        if (Base.warheadActionType.HasFlag(warhead))
+                                        if (Base.warheadAction.HasFlag(warhead))
                                         {
                                             switch (warhead)
                                             {
@@ -153,13 +257,13 @@ namespace AdvancedMERTools
                                     }
                                     break;
                                 case DeadType.SendMessage:
-                                    MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.messageModules), Formatter, player, this.transform, damage);
+                                    MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, player, this.transform, damage);
                                     break;
                                 case DeadType.DropItems:
-                                    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.dropItems), this.transform);
+                                    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.DropItems), this.transform);
                                     break;
                                 case DeadType.SendCommand:
-                                    CommandModule.GetSingleton<CommandModule>().Execute(CommandModule.SelectList<CommandModule>(Base.commandings), Formatter, player, this.transform, damage);
+                                    Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.Commandings), Formatter, player, this.transform, damage);
                                     break;
                                 case DeadType.GiveEffect:
                                     EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
@@ -229,5 +333,21 @@ namespace AdvancedMERTools
         public new HODTO Base;
 
         public List<AnimationModule> modules = new List<AnimationModule> { };
+
+        public uint NetworkId
+        {
+            get
+            {
+                return base.netId;
+            }
+        }
+
+        public Vector3 CenterOfMass
+        {
+            get
+            {
+                return Vector3.zero;
+            }
+        }
     }
 }
