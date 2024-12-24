@@ -173,7 +173,7 @@ namespace AdvancedMERTools
         public void Apply()
         {
             ReferenceHub hub = AdvancedMERTools.MakeAudio(out int id);
-            MEC.Timing.CallDelayed(0.35f, () => 
+            MEC.Timing.CallDelayed(0.35f, () =>
             {
                 hub.authManager.UserId = "ID_Dedicated";
                 //Central Core.
@@ -207,7 +207,7 @@ namespace AdvancedMERTools
         void Update()
         {
             if (Cooldown >= 0)
-            Cooldown -= Time.deltaTime;
+                Cooldown -= Time.deltaTime;
         }
 
         public void OnPickingUp(SearchingPickupEventArgs ev)
@@ -268,7 +268,7 @@ namespace AdvancedMERTools
             return false;
         }
 
-        public bool IsOpened 
+        public bool IsOpened
         {
             get
             {
