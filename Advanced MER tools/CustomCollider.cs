@@ -9,52 +9,28 @@ using UnityEngine;
 
 public class CustomCollider : MonoBehaviour
 {
-    public CollisionType CollisionType;
-    public ColliderActionType ActionFlag;
-    public DetectType DetectType;
-    //public bool InvisibleCollider;
-    //[Description("Bounds' extra size. That helps it detect even if primitives are collidable.")]
-    //public float ContactOffSet;
-    //[ShowIf("ActionFlag", ColliderActionType.ModifyHealth)]
-	[Header("Modify Health")]
-    public float Amount;
-	//[ShowIf("ActionFlag", ColliderActionType.GiveEffect)]
-	//[ReorderableList]
-	public List<EffectGivingModule> EffectGivingModules;
-	//[ShowIf("ActionFlag", ColliderActionType.PlayAnimation)]
-	//[ReorderableList]
-	public List<AnimationModule> AnimationModules;
-	//[ShowIf("ActionFlag", ColliderActionType.SendCommand)]
-	//[ReorderableList]
-	public List<Commanding> Commandings;
-	//[ShowIf("ActionFlag", ColliderActionType.SendMessage)]
-	//[ReorderableList]
-	public List<MessageModule> MessageModules;
-	//[ShowIf("ActionFlag", ColliderActionType.Explode)]
-	//[ReorderableList]
-	public List<ExplodeModule> ExplodeModules;
-	//[BoxGroup("Warhead")]
-	//[ShowIf("ActionFlag", ColliderActionType.Warhead)]
-	public WarheadActionType warheadAction = WarheadActionType.Start;
+    public CCDTO data = new CCDTO();
 }
 
 [Serializable]
 public class CCDTO
 {
-	public ColliderActionType ColliderActionType;
+    public bool Active;
+    public ColliderActionType ColliderActionType;
 	public CollisionType CollisionType;
     public DetectType DetectType;
-	public string ObjectId;
-	//public bool Invisible;
-    //public float ContactOffSet;
-    public float Amount;
-	public List<AnimationDTO> animationDTOs;
+    public float ModifyHealthAmount;
+	public List<AnimationDTO> AnimationModules;
 	public WarheadActionType warheadActionType;
 	public List<MessageModule> MessageModules;
 	public List<DropItem> dropItems;
 	public List<Commanding> commandings;
 	public List<ExplodeModule> ExplodeModules;
 	public List<EffectGivingModule> effectGivingModules;
+    [HideInInspector]
+    public string ObjectId;
+    [HideInInspector]
+    public int Code;
 }
 
 public class CustomColliderCompiler
@@ -90,60 +66,13 @@ public class CustomColliderCompiler
 
         foreach (CustomCollider ip in schematic.transform.GetComponentsInChildren<CustomCollider>())
         {
-            CCDTO DTO = new CCDTO
+            ip.data.AnimationModules.ForEach(x => 
             {
-                ObjectId = PublicFunctions.FindPath(ip.transform),
-                ColliderActionType = ip.ActionFlag,
-                CollisionType = ip.CollisionType,
-                //Invisible = ip.InvisibleCollider,
-                DetectType = ip.DetectType,
-                //ContactOffSet = ip.ContactOffSet
-            };
-            foreach (ColliderActionType type in Enum.GetValues(typeof(ColliderActionType)))
-            {
-                if (ip.ActionFlag.HasFlag(type))
-                {
-                    switch (type)
-                    {
-                        case ColliderActionType.ModifyHealth:
-                            DTO.Amount = ip.Amount;
-                            break;
-                        case ColliderActionType.Explode:
-                            DTO.ExplodeModules = ip.ExplodeModules;
-                            break;
-                        case ColliderActionType.PlayAnimation:
-                            DTO.animationDTOs = new List<AnimationDTO> { };
-                            foreach (AnimationModule module in ip.AnimationModules)
-                            {
-                                DTO.animationDTOs.Add(new AnimationDTO
-                                {
-                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
-                                    Animation = module.AnimationName,
-                                    AnimationType = module.AnimationType,
-                                    ForceExecute = module.ForceExecute,
-                                    ChanceWeight = module.ChanceWeight
-                                });
-                            }
-                            break;
-                        case ColliderActionType.Warhead:
-                            DTO.warheadActionType = ip.warheadAction;
-                            break;
-                        case ColliderActionType.SendMessage:
-                            DTO.MessageModules = ip.MessageModules;
-                            break;
-                        case ColliderActionType.SendCommand:
-                            DTO.commandings = ip.Commandings;
-                            break;
-                        case ColliderActionType.GiveEffect:
-                            DTO.effectGivingModules = ip.EffectGivingModules;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            interactables.Add(DTO);
+                x.AnimatorAdress = PublicFunctions.FindPath(x.Animator.transform);
+            });
+            ip.data.Code = ip.GetInstanceID();
+            ip.data.ObjectId = PublicFunctions.FindPath(ip.transform);
+            interactables.Add(ip.data);
         }
 
         string serializedData = JsonConvert.SerializeObject(interactables, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
