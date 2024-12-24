@@ -10,49 +10,25 @@ using System;
 
 public class InteractableTeleporter : MonoBehaviour
 {
-    [Tooltip("Index means the index of teleporter that this script will be applied to, in loaded map. It starts from 1.")]
-    public int index;
-    public TeleportInvokeType TeleportInvokeType;
-    public IPActionType ActionType;
-    //[ShowIf("ActionType", IPActionType.PlayAnimation)]
-    //[ReorderableList]
-    public List<AnimationModule> AnimationModules;
-    //[ShowIf("ActionType", IPActionType.Explode)]
-    //[ReorderableList]
-    public List<ExplodeModule> ExplodeModules;
-    //[ShowIf("ActionType", IPActionType.Warhead)]
-    public WarheadActionType warheadAction;
-    //[ShowIf("ActionType", IPActionType.SendMessage)]
-    //[ReorderableList]
-    public List<MessageModule> MessageModules;
-    //[ShowIf("ActionType", IPActionType.DropItems)]
-    //[ReorderableList]
-    //public List<DropItem> DropItems;
-    //[ShowIf("ActionType", IPActionType.SendCommand)]
-    //[ReorderableList]
-    [Header("There's many formats you can see when you put on curser to 'command context'")]
-    public List<Commanding> Commandings;
-    //[ShowIf("ActionType", IPActionType.GiveEffect)]
-    //[ReorderableList]
-    public List<EffectGivingModule> effectGivingModules;
-
+    public ITDTO data = new ITDTO();
+    
     private void OnValidate()
     {
         bool flag = false;
-        if (ActionType.HasFlag(IPActionType.UpgradeItem))
+        if (data.ActionType.HasFlag(IPActionType.UpgradeItem))
         {
             flag = true;
-            ActionType -= IPActionType.UpgradeItem;
+            data.ActionType -= IPActionType.UpgradeItem;
         }
         //if (ActionType.HasFlag(IPActionType.PlayAnimation))
         //{
         //    flag = true;
         //    ActionType -= IPActionType.PlayAnimation;
         //}
-        if (ActionType.HasFlag(IPActionType.DropItems))
+        if (data.ActionType.HasFlag(IPActionType.DropItems))
         {
             flag = true;
-            ActionType -= IPActionType.DropItems;
+            data.ActionType -= IPActionType.DropItems;
         }
         if (flag)
             Debug.Log("You cannot use that option in InteractableTeleporters!");
@@ -62,16 +38,22 @@ public class InteractableTeleporter : MonoBehaviour
 [Serializable]
 public class ITDTO
 {
+    public bool Active;
+    [JsonIgnore]
+    [Tooltip("Index means the index of teleporter that this script will be applied to, in loaded map. It starts from 1.")]
+    public int index;
     public TeleportInvokeType InvokeType;
     public IPActionType ActionType;
-    public string ObjectId;
     public List<AnimationDTO> animationDTOs;
     public WarheadActionType warheadActionType;
     public List<MessageModule> MessageModules;
-    //public List<DropItem> dropItems;
     public List<Commanding> commandings;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
+    [HideInInspector]
+    public string ObjectId;
+    [HideInInspector]
+    public int Code;
 }
 
 public class InteractableTeleporterCompiler
@@ -95,57 +77,9 @@ public class InteractableTeleporterCompiler
 
         foreach (InteractableTeleporter ip in GameObject.FindObjectsOfType<InteractableTeleporter>())
         {
-            ITDTO DTO = new ITDTO
-            {
-                ObjectId = ip.index.ToString(),
-                ActionType = ip.ActionType,
-                InvokeType = ip.TeleportInvokeType
-            };
-            foreach (IPActionType type in Enum.GetValues(typeof(IPActionType)))
-            {
-                if (ip.ActionType.HasFlag(type))
-                {
-                    switch (type)
-                    {
-                        case IPActionType.Explode:
-                            DTO.ExplodeModules = ip.ExplodeModules;
-                            break;
-                        //case IPActionType.DropItems:
-                        //    DTO.dropItems = ip.DropItems;
-                        //    break;
-                        case IPActionType.PlayAnimation:
-                            DTO.animationDTOs = new List<AnimationDTO> { };
-                            foreach (AnimationModule module in ip.AnimationModules)
-                            {
-                                DTO.animationDTOs.Add(new AnimationDTO
-                                {
-                                    Animator = PublicFunctions.FindPath(module.Animator.transform),
-                                    Animation = module.AnimationName,
-                                    AnimationType = module.AnimationType,
-                                    ForceExecute = module.ForceExecute,
-                                    ChanceWeight = module.ChanceWeight
-                                });
-                            }
-                            break;
-                        case IPActionType.Warhead:
-                            DTO.warheadActionType = ip.warheadAction;
-                            break;
-                        case IPActionType.SendMessage:
-                            DTO.MessageModules = ip.MessageModules;
-                            break;
-                        case IPActionType.SendCommand:
-                            DTO.commandings = ip.Commandings;
-                            break;
-                        case IPActionType.GiveEffect:
-                            DTO.effectGivingModules = ip.effectGivingModules;
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            }
-
-            interactables.Add(DTO);
+            ip.data.Code = ip.GetInstanceID();
+            ip.data.ObjectId = ip.data.index.ToString();
+            interactables.Add(ip.data);
         }
 
         string serializedData = JsonConvert.SerializeObject(interactables, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
