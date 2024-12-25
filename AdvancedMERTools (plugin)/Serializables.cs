@@ -12,6 +12,9 @@ using Exiled.CustomItems.API.Features;
 using Exiled.API.Features;
 using Exiled.API.Features.Items;
 using Mirror;
+using InventorySystem;
+using InventorySystem.Items;
+using InventorySystem.Items.Pickups;
 
 namespace AdvancedMERTools
 {
@@ -76,6 +79,22 @@ namespace AdvancedMERTools
         public List<MessageModule> MessageModules;
         public List<DropItem> dropItems;
         public List<Commanding> commandings;
+        public List<ExplodeModule> ExplodeModules;
+        public List<EffectGivingModule> effectGivingModules;
+    }
+
+    [Serializable]
+    public class IODTO : AMERTDTO
+    {
+        public KeyCode KeyCode;
+        public float MaxRange;
+        public IPActionType ActionType;
+        public List<AnimationDTO> AnimationModules;
+        public WarheadActionType warheadActionType;
+        public List<MessageModule> MessageModules;
+        public List<DropItem> dropItems;
+        public List<Commanding> commandings;
+        public Scp914Mode Scp914Mode;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
     }
@@ -597,14 +616,19 @@ namespace AdvancedMERTools
 
         public override void Execute(params object[] args)
         {
+            //ServerConsole.AddLog("!!");
             List<DropItem> items = args[0] as List<DropItem>;
             Transform transform = args[1] as Transform;
 
+            //ServerConsole.AddLog(items.Count.ToString());
             foreach (DropItem item in items)
             {
+                //ServerConsole.AddLog((transform == null).ToString());
                 MEC.Timing.CallDelayed(item.ActionDelay, () => 
                 {
+                    //ServerConsole.AddLog("!!!");
                     Vector3 vector3 = transform.TransformPoint(item.DropLocalPosition);
+                    //ServerConsole.AddLog(vector3.ToString());
                     if (item.CustomItemId != 0 && CustomItem.TryGet(item.CustomItemId, out CustomItem custom))
                     {
                         for (int i = 0; i < item.Count; i++)
@@ -614,9 +638,13 @@ namespace AdvancedMERTools
                     }
                     else
                     {
+                        if (!InventoryItemLoader.AvailableItems.TryGetValue(item.ItemType, out ItemBase itemBase) || itemBase.PickupDropModel == null)
+                            return;
                         for (int i = 0; i < item.Count; i++)
                         {
-                            Item.Create(item.ItemType).CreatePickup(vector3);
+                            ItemPickupBase itemPickupBase = UnityEngine.Object.Instantiate<ItemPickupBase>(itemBase.PickupDropModel, vector3, transform.rotation);
+                            itemPickupBase.NetworkInfo = new PickupSyncInfo(item.ItemType, itemBase.Weight, 0, false);
+                            NetworkServer.Spawn(itemPickupBase.gameObject);
                         }
                     }
                 });
