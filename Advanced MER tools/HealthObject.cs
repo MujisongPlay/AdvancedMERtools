@@ -8,16 +8,15 @@ using UnityEditor;
 using UnityEngine;
 using System.Linq;
 
-public class HealthObject : MonoBehaviour
+public class HealthObject : FakeMono
 {
     public HODTO data = new HODTO();
     public string[] formats = "DO NOT TOUCH THE VALUES.\n{attacker_i} = attacker's player id.\n{attacker_name}\n{a_pos} = attacker's position.\n{a_room} = attacker's room\n{a_zone} = attacker's zone\n{a_role} = attacker's role\n{s_pos} = schematic's exact position.\n{s_room} = schematic's exact room.\n{s_zone} = schematic's zone.\n{a_item} = attacker's current item.\n{damage}".Split('\n');
 }
 
 [Serializable]
-public class HODTO
+public class HODTO : DTO
 {
-    public bool Active;
     public float Health;
     [Range(0, 100)]
     public int ArmorEfficient;
@@ -33,10 +32,8 @@ public class HODTO
     public List<Commanding> Commandings;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
-    [HideInInspector]
-    public string ObjectId;
-    [HideInInspector]
-    public int Code;
+    public List<AudioModule> AudioModules;
+    public List<CGNModule> GroovieNoiseToCall;
 }
 
 public class HealthObjectCompiler : MonoBehaviour
