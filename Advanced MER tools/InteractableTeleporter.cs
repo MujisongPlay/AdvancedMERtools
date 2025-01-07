@@ -8,7 +8,7 @@ using System.IO;
 using UnityEditor;
 using System;
 
-public class InteractableTeleporter : MonoBehaviour
+public class InteractableTeleporter : FakeMono
 {
     public ITDTO data = new ITDTO();
     
@@ -36,10 +36,8 @@ public class InteractableTeleporter : MonoBehaviour
 }
 
 [Serializable]
-public class ITDTO
+public class ITDTO : DTO
 {
-    public bool Active;
-    [JsonIgnore]
     [Tooltip("Index means the index of teleporter that this script will be applied to, in loaded map. It starts from 1.")]
     public int index;
     public TeleportInvokeType InvokeType;
@@ -50,10 +48,8 @@ public class ITDTO
     public List<Commanding> commandings;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
-    [HideInInspector]
-    public string ObjectId;
-    [HideInInspector]
-    public int Code;
+    public List<AudioModule> AudioModules;
+    public List<CGNModule> GroovieNoiseToCall;
 }
 
 public class InteractableTeleporterCompiler
