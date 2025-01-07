@@ -36,6 +36,28 @@ namespace AdvancedMERTools
         public List<Commanding> Commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
+        public List<AudioModule> AudioModules;
+        public List<CGNModule> GroovieNoiseToCall;
+    }
+
+    [Serializable]
+    public class CGNModule : RandomExecutionModule
+    {
+        public int GroovieNoiseId;
+        public bool Enable;
+
+        public override void Execute(params object[] args)
+        {
+            List<CGNModule> gs = args[0] as List<CGNModule>;
+            foreach (CGNModule mDTO in gs)
+            {
+                MEC.Timing.CallDelayed(mDTO.ActionDelay, () =>
+                {
+                    if (AdvancedMERTools.Singleton.codeClassPair.TryGetValue(mDTO.GroovieNoiseId, out AMERTInteractable v)) 
+                        v.Active = mDTO.Enable;
+                });
+            }
+        }
     }
 
     [Serializable]
@@ -49,6 +71,8 @@ namespace AdvancedMERTools
         public List<Commanding> commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
+        public List<AudioModule> AudioModules;
+        public List<CGNModule> GroovieNoiseToCall;
     }
 
     [Serializable]
@@ -65,6 +89,8 @@ namespace AdvancedMERTools
         public Scp914Mode Scp914Mode;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
+        public List<AudioModule> AudioModules;
+        public List<CGNModule> GroovieNoiseToCall;
     }
 
     [Serializable]
@@ -81,13 +107,15 @@ namespace AdvancedMERTools
         public List<Commanding> commandings;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
+        public List<AudioModule> AudioModules;
+        public List<CGNModule> GroovieNoiseToCall;
     }
 
     [Serializable]
     public class IODTO : AMERTDTO
     {
-        public KeyCode KeyCode;
-        public float MaxRange;
+        public int InputKeyCode;
+        public float InteractionMaxRange;
         public IPActionType ActionType;
         public List<AnimationDTO> AnimationModules;
         public WarheadActionType warheadActionType;
@@ -97,12 +125,14 @@ namespace AdvancedMERTools
         public Scp914Mode Scp914Mode;
         public List<ExplodeModule> ExplodeModules;
         public List<EffectGivingModule> effectGivingModules;
+        public List<AudioModule> AudioModules;
+        public List<CGNModule> GroovieNoiseToCall;
     }
 
     [Serializable]
     public class GNDTO : AMERTDTO
     {
-        public List<GMDTO> GMDTOs;
+        public List<GMDTO> Settings;
     }
 
     [Serializable]
@@ -135,7 +165,7 @@ namespace AdvancedMERTools
     [Serializable]
     public class GMDTO : RandomExecutionModule
     {
-        public List<int> codes;
+        public List<int> Targets;
         public bool Enable;
 
         public override void Execute(params object[] args)
@@ -145,7 +175,7 @@ namespace AdvancedMERTools
             {
                 MEC.Timing.CallDelayed(mDTO.ActionDelay, () => 
                 {
-                    mDTO.codes.ForEach(x => AdvancedMERTools.Singleton.codeClassPair[x].Active = mDTO.Enable);
+                    mDTO.Targets.ForEach(x => { if (AdvancedMERTools.Singleton.codeClassPair.TryGetValue(x, out AMERTInteractable v)) v.Active = mDTO.Enable; });
                 });
             }
         }
@@ -181,7 +211,9 @@ namespace AdvancedMERTools
         PlayAnimation = 8,
         SendCommand = 16,
         Warhead = 32,
-        Explode = 64
+        Explode = 64,
+        PlayAudio = 128,
+        CallGroovieNoise = 256,
     }
 
     [Flags]
@@ -279,6 +311,38 @@ namespace AdvancedMERTools
                     else
                         ExplosionUtils.ServerExplode(transform.TransformPoint(module.LocalPosition), module.FFon ? new Footprint(local) : new Footprint(hub), ExplosionType.Grenade);
                 });
+            }
+        }
+    }
+
+    [Serializable]
+    public class AudioModule : RandomExecutionModule
+    {
+        public string AudioName;
+        [Header("0: Loop")]
+        public int PlayCount;
+        public bool IsSpatial;
+        public float MaxDistance;
+        public float MinDistance;
+        public float Volume;
+        public SVector3 LocalPlayPosition;
+        public AudioPlayer AP;
+
+        public override void Execute(params object[] args)
+        {
+            List<AudioModule> audios = args[0] as List<AudioModule>;
+            Transform tf = args[1] as Transform;
+            foreach (AudioModule module in audios)
+            {
+                if (module.AP == null)
+                {
+                    module.AP = AudioPlayer.Create("");
+                    module.AP.AddSpeaker("Primary", tf.TransformPoint(module.LocalPlayPosition), module.Volume, module.IsSpatial, module.MinDistance, module.MaxDistance);
+                }
+                if (module.PlayCount == 0)
+                    module.AP.AddClip(module.AudioName, module.Volume, true);
+                for (int i = 0; i < module.PlayCount; i++)
+                    module.AP.AddClip(module.AudioName, module.Volume, false);
             }
         }
     }
@@ -491,7 +555,9 @@ namespace AdvancedMERTools
         SendMessage = 128,
         DropItems = 256,
         SendCommand = 512,
-        GiveEffect = 1024
+        GiveEffect = 1024,
+        PlayAudio = 2048,
+        CallGroovieNoise = 4096
     }
 
     [Flags]
@@ -506,7 +572,9 @@ namespace AdvancedMERTools
         DropItems = 32,
         SendCommand = 64,
         UpgradeItem = 128,
-        GiveEffect = 256
+        GiveEffect = 256,
+        PlayAudio = 512,
+        CallGroovieNoise = 1024
     }
 
     [Flags]
