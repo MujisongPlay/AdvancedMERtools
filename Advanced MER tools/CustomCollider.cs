@@ -7,15 +7,14 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-public class CustomCollider : MonoBehaviour
+public class CustomCollider : FakeMono
 {
     public CCDTO data = new CCDTO();
 }
 
 [Serializable]
-public class CCDTO
+public class CCDTO : DTO
 {
-    public bool Active;
     public ColliderActionType ColliderActionType;
 	public CollisionType CollisionType;
     public DetectType DetectType;
@@ -27,10 +26,8 @@ public class CCDTO
 	public List<Commanding> commandings;
 	public List<ExplodeModule> ExplodeModules;
 	public List<EffectGivingModule> effectGivingModules;
-    [HideInInspector]
-    public string ObjectId;
-    [HideInInspector]
-    public int Code;
+    public List<AudioModule> AudioModules;
+    public List<CGNModule> GroovieNoiseToCall;
 }
 
 public class CustomColliderCompiler
