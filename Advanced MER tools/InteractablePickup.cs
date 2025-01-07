@@ -8,15 +8,14 @@ using System.IO;
 using UnityEditor;
 using Newtonsoft.Json;
 
-public class InteractablePickup : MonoBehaviour
+public class InteractablePickup : FakeMono
 {
     public IPDTO data = new IPDTO();
 }
 
 [Serializable]
-public class IPDTO
+public class IPDTO : DTO
 {
-    public bool Active;
     public InvokeType InvokeType;
     public IPActionType ActionType;
     public bool CancelActionWhenActive;
@@ -28,10 +27,8 @@ public class IPDTO
     public Scp914Mode Scp914Mode;
     public List<ExplodeModule> ExplodeModules;
     public List<EffectGivingModule> effectGivingModules;
-    [HideInInspector]
-    public string ObjectId;
-    [HideInInspector]
-    public int Code;
+    public List<AudioModule> AudioModules;
+    public List<CGNModule> GroovieNoiseToCall;
 }
 
 public class InteractablePickupCompiler
