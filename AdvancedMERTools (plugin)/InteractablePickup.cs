@@ -37,7 +37,7 @@ namespace AdvancedMERTools
         public void RunProcess(Player player, Pickup pickup, out bool Remove)
         {
             Remove = false;
-            if (pickup != this.Pickup)
+            if (pickup != this.Pickup || !Active)
             {
                 return;
             }
@@ -119,6 +119,12 @@ namespace AdvancedMERTools
                             break;
                         case IPActionType.GiveEffect:
                             EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
+                            break;
+                        case IPActionType.PlayAudio:
+                            AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
+                            break;
+                        case IPActionType.CallGroovieNoise:
+                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
                             break;
                     }
                 }
