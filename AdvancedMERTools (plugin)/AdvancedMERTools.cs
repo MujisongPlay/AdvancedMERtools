@@ -30,6 +30,7 @@ using PlayerRoles.FirstPersonControl;
 using CommandSystem;
 using CommandSystem.Commands;
 using RemoteAdmin;
+using UserSettings.ServerSpecific;
 
 using Maps = MapEditorReborn.Events.Handlers.Map;
 
@@ -59,9 +60,13 @@ namespace AdvancedMERTools
 
         public List<CustomDoor> customDoors = new List<CustomDoor> { };
 
+        public List<InteractableObject> interactableObjects = new List<InteractableObject> { };
+
         public Dictionary<int, AMERTInteractable> codeClassPair = new Dictionary<int, AMERTInteractable> { };
 
         public Dictionary<Type, RandomExecutionModule> TypeSingletonPair = new Dictionary<Type, RandomExecutionModule> { };
+
+        public Dictionary<int, List<InteractableObject>> IOkeys = new Dictionary<int, List<InteractableObject>> { };
 
         public override void OnEnabled()
         {
@@ -83,61 +88,59 @@ namespace AdvancedMERTools
         void Register()
         {
             Maps.LoadingMap += manager.OnLoadMap;
+            ServerSpecificSettingsSync.ServerOnSettingValueReceived += manager.OnSSInput;
             MapEditorReborn.Events.Handlers.Schematic.SchematicSpawned += manager.OnSchematicLoad;
             Exiled.Events.Handlers.Map.Generated += manager.OnGen;
             //Exiled.Events.Handlers.Server.RoundStarted += manager.OnRound;
             //Exiled.Events.Handlers.Map.Decontaminating += manager.OnDecont;
             Exiled.Events.Handlers.Map.ExplodingGrenade += manager.OnGrenade;
             //Exiled.Events.Handlers.Warhead.Detonated += manager.OnAlpha;
-            Exiled.Events.Handlers.Player.Shot += manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned += manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup += manager.OnItemSearching;
             Exiled.Events.Handlers.Player.PickingUpItem += manager.OnItemPicked;
             //Exiled.Events.Handlers.Player.InteractingDoor += manager.OnInteracted;
-            Exiled.Events.Handlers.Player.Joined += manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting += manager.OnTeleport;
         }
 
         void UnRegister()
         {
             Maps.LoadingMap -= manager.OnLoadMap;
+            ServerSpecificSettingsSync.ServerOnSettingValueReceived -= manager.OnSSInput;
             MapEditorReborn.Events.Handlers.Schematic.SchematicSpawned -= manager.OnSchematicLoad;
             Exiled.Events.Handlers.Map.Generated -= manager.OnGen;
             //Exiled.Events.Handlers.Server.RoundStarted -= manager.OnRound;
             //Exiled.Events.Handlers.Map.Decontaminating -= manager.OnDecont;
             Exiled.Events.Handlers.Map.ExplodingGrenade -= manager.OnGrenade;
             //Exiled.Events.Handlers.Warhead.Detonated -= manager.OnAlpha;
-            Exiled.Events.Handlers.Player.Shot -= manager.OnShot;
             Exiled.Events.Handlers.Player.Spawned -= manager.ApplyCustomSpawnPoint;
             Exiled.Events.Handlers.Player.SearchingPickup -= manager.OnItemSearching;
             Exiled.Events.Handlers.Player.PickingUpItem -= manager.OnItemPicked;
             //Exiled.Events.Handlers.Player.InteractingDoor -= manager.OnInteracted;
-            Exiled.Events.Handlers.Player.Joined -= manager.OnJoined;
             MapEditorReborn.Events.Handlers.Teleport.Teleporting -= manager.OnTeleport;
         }
 
-        public static ReferenceHub MakeAudio(out int id)
-        {
-            GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(NetworkManager.singleton.playerPrefab);
-            ReferenceHub hub = gameObject.GetComponent<ReferenceHub>();
-            try
-            {
-                hub.roleManager.InitializeNewRole(RoleTypeId.None, RoleChangeReason.None, RoleSpawnFlags.All, null);
-            }
-            catch { }
-            id = new RecyclablePlayerId(true).Value;
-            FakeConnection fakeConnection = new FakeConnection(id);
-            NetworkServer.AddPlayerForConnection(fakeConnection, gameObject);
-            MEC.Timing.CallDelayed(0.25f, () =>
-            {
-                try
-                {
-                    hub.roleManager.ServerSetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.All);
-                }
-                catch { }
-            });
-            return hub;
-        }
+        //public static ReferenceHub MakeAudio(out int id)
+        //{
+        //    GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(NetworkManager.singleton.playerPrefab);
+        //    ReferenceHub hub = gameObject.GetComponent<ReferenceHub>();
+        //    try
+        //    {
+        //        hub.roleManager.InitializeNewRole(RoleTypeId.None, RoleChangeReason.None, RoleSpawnFlags.All, null);
+        //    }
+        //    catch { }
+        //    id = new RecyclablePlayerId(true).Value;
+        //    FakeConnection fakeConnection = new FakeConnection(id);
+        //    NetworkServer.AddPlayerForConnection(fakeConnection, gameObject);
+        //    MEC.Timing.CallDelayed(0.25f, () =>
+        //    {
+        //        try
+        //        {
+        //            hub.roleManager.ServerSetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.All);
+        //        }
+        //        catch { }
+        //    });
+        //    return hub;
+        //}
 
         public static void ExecuteCommand(string context)
         {
@@ -150,30 +153,30 @@ namespace AdvancedMERTools
         }
     }
 
-    public class FakeConnection : NetworkConnectionToClient
-    {
-        public FakeConnection(int connectionId) : base(connectionId)
-        {
+    //public class FakeConnection : NetworkConnectionToClient
+    //{
+    //    public FakeConnection(int connectionId) : base(connectionId)
+    //    {
 
-        }
+    //    }
 
-        public override string address
-        {
-            get
-            {
-                return "localhost";
-            }
-        }
+    //    public override string address
+    //    {
+    //        get
+    //        {
+    //            return "localhost";
+    //        }
+    //    }
 
-        public override void Send(ArraySegment<byte> segment, int channelId = 0)
-        {
-            base.Send(segment, channelId);
-        }
-        public override void Disconnect()
-        {
-            base.Disconnect();
-        }
-    }
+    //    public override void Send(ArraySegment<byte> segment, int channelId = 0)
+    //    {
+    //        base.Send(segment, channelId);
+    //    }
+    //    public override void Disconnect()
+    //    {
+    //        base.Disconnect();
+    //    }
+    //}
 
     public static class EventHandler
     {
@@ -189,35 +192,21 @@ namespace AdvancedMERTools
     {
         Config config = AdvancedMERTools.Singleton.Config;
 
-        public void OnJoined(Exiled.Events.EventArgs.Player.JoinedEventArgs ev)
-        {
-            //identities.ForEach(x => x.gameObject.SetActive(false));
-        }
-
-        public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
-        {
-            //ev.RaycastHit.collider.transform.GetComponentsInParent<HealthObject>().ForEach(x => x.OnShot(ev));
-        }
-
-        //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
-        //{
-        //    AdvancedMERTools.Singleton.dummyDoors.ForEach(x => x.OnInteractDoor(ev));
-        //}
 
         public void OnGrenade(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
-            //foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
-            //{
-            //    try
-            //    {
-            //        health.OnGrenadeExplode(ev);
-            //    }
-            //    catch (NullReferenceException _)
-            //    {
-            //        continue;
-            //    }
-            //}
-            //AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
+            foreach (HealthObject health in AdvancedMERTools.Singleton.healthObjects)
+            {
+                try
+                {
+                    health.OnGrenadeExplode(ev);
+                }
+                catch (NullReferenceException _)
+                {
+                    continue;
+                }
+            }
+            AdvancedMERTools.Singleton.healthObjects.ForEach(x => x.OnGrenadeExplode(ev));
         }
 
         public void OnItemSearching(Exiled.Events.EventArgs.Player.SearchingPickupEventArgs ev)
@@ -259,6 +248,29 @@ namespace AdvancedMERTools
                 }
             }
             removeList.ForEach(x => x.Destroy());
+        }
+
+        public void OnSSInput(ReferenceHub sender, ServerSpecificSettingBase setting)
+        {
+            //ServerConsole.AddLog("INPUTTED!!!");
+            SSKeybindSetting sSKeybind = setting.OriginalDefinition as SSKeybindSetting;
+            if (sSKeybind != null && (setting as SSKeybindSetting).SyncIsPressed)
+            {
+                KeyCode key = sSKeybind.SuggestedKey;
+                //ServerConsole.AddLog(key.ToString());
+                //ServerConsole.AddLog(((int)key).ToString());
+                if (AdvancedMERTools.Singleton.IOkeys.ContainsKey((int)key) && Physics.Raycast(sender.PlayerCameraReference.position, sender.PlayerCameraReference.forward, out RaycastHit hit, 1000f, 1))
+                {
+                    //ServerConsole.AddLog(hit.collider.gameObject.name);
+                    foreach (InteractableObject interactable in hit.collider.GetComponentsInParent<InteractableObject>())
+                    {
+                        if (interactable.Base.InputKeyCode == (int)key && hit.distance <= interactable.Base.InteractionMaxRange)
+                        {
+                            interactable.RunProcess(Player.Get(sender));
+                        }
+                    }
+                }
+            }
         }
 
         //public void OnInteracted(Exiled.Events.EventArgs.Player.InteractingDoorEventArgs ev)
@@ -323,6 +335,7 @@ namespace AdvancedMERTools
             DataLoad<HODTO, HealthObject>("HealthObjects", ev);
             DataLoad<IPDTO, InteractablePickup>("Pickups", ev);
             DataLoad<CCDTO, CustomCollider>("Colliders", ev);
+            DataLoad<IODTO, InteractableObject>("Objects", ev);
         }
 
         public void DataLoad<Tdto, Tclass>(string name, MapEditorReborn.Events.EventArgs.SchematicSpawnedEventArgs ev) where Tdto : AMERTDTO where Tclass : AMERTInteractable, new()
@@ -338,8 +351,9 @@ namespace AdvancedMERTools
                     Transform target = FindObjectWithPath(ev.Schematic.transform, dto.ObjectId);
                     Tclass tclass = target.gameObject.AddComponent<Tclass>();
                     tclass.Base = dto;
-                    if (AdvancedMERTools.Singleton.groovyNoises.Any(x => x.Base.GMDTOs.Select(y => y.codes).Any(y => y.Contains(dto.Code))))
-                        tclass.Active = false;
+                    tclass.Active = dto.Active;
+                    //if (AdvancedMERTools.Singleton.groovyNoises.Any(x => x.Base.GMDTOs.Select(y => y.codes).Any(y => y.Contains(dto.Code))))
+                    //    tclass.Active = false;
                 }
             }
         }
@@ -372,19 +386,7 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.CustomColliders.Clear();
             AdvancedMERTools.Singleton.groovyNoises.Clear();
             AdvancedMERTools.Singleton.codeClassPair.Clear();
-            //if (config.AutoRunOnEventList.Contains(Config.EventList.Generated))
-            //{
-            //    AutoRun();
-            //}
-            //foreach (NetworkIdentity identity in GameObject.FindObjectsOfType<NetworkIdentity>())
-            //{
-            //    if (identity.name.Equals("All"))
-            //    {
-            //        //ServerConsole.AddLog(identity.transform.parent.gameObject.name);
-            //        //identities.Add(identity);
-            //        NetworkIdentity.Destroy(identity.transform.parent.gameObject);
-            //    }
-            //}
+            AdvancedMERTools.Singleton.interactableObjects.Clear();
         }
 
         List<NetworkIdentity> identities = new List<NetworkIdentity> { };
