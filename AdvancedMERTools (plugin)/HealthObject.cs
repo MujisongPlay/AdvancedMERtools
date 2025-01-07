@@ -41,11 +41,12 @@ namespace AdvancedMERTools
 
         public bool Damage(float damage, DamageHandlerBase handler, Vector3 exactHitPos)
         {
-            //ServerConsole.AddLog("!!!");
-            return parent.Damage(damage, handler, exactHitPos);
+            bool hit = false;
+            parents.ForEach(x => hit |= x.Damage(damage, handler, exactHitPos));
+            return hit;
         }
 
-        public HealthObject parent;
+        public List<HealthObject> parents = new List<HealthObject> { };
     }
 
     public class HealthObject : AMERTInteractable, IDestructible
@@ -58,8 +59,15 @@ namespace AdvancedMERTools
             //transform.GetComponentsInChildren<Transform>().ForEach(x => x.gameObject.layer = LayerMask.GetMask("Glass"));
             this.transform.GetComponentsInChildren<PrimitiveObjectToy>().ForEach(x => 
             {
-                Healther healther = x.gameObject.AddComponent<Healther>();
-                healther.parent = this;
+                if (x.gameObject.TryGetComponent<Healther>(out Healther healther))
+                {
+                    healther.parents.Add(this);
+                }
+                else
+                {
+                    healther = x.gameObject.AddComponent<Healther>();
+                    healther.parents.Add(this);
+                }
             });
             AdvancedMERTools.Singleton.healthObjects.Add(this);
             AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
@@ -77,6 +85,8 @@ namespace AdvancedMERTools
 
         public bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
         {
+            if (!IsAlive || !Active)
+                return false;
             //ServerConsole.AddLog("1");
             Player attacker = null;
             AttackerDamageHandler damageHandler = handler as AttackerDamageHandler;
@@ -130,51 +140,19 @@ namespace AdvancedMERTools
             return true;
         }
 
-        //public void OnShot(Exiled.Events.EventArgs.Player.ShotEventArgs ev)
-        //{
-        //    if (!ev.CanHurt || ev.Player == null || !IsAlive || !(ev.Player.CurrentItem is Firearm)) return;
-        //    if (Base.whitelistWeapons.Count != 0)
-        //    {
-        //        if (CustomItem.TryGet(ev.Player.CurrentItem, out CustomItem custom))
-        //        {
-        //            if (Base.whitelistWeapons.Find(x => x.CustomItemId == custom.Id) == null) return;
-        //        }
-        //        else
-        //        {
-        //            if (Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ev.Player.CurrentItem.Type) == null) return;
-        //        }
-        //    }
-        //    Firearm firearm = ev.Player.CurrentItem as Firearm;
-        //    float damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, firearm.Base.BaseStats.DamageAtDistance(firearm.Base, ev.Distance), Mathf.RoundToInt(firearm.Base.ArmorPenetration * 100f));
-        //    if (firearm.Type == ItemType.GunShotgun && firearm.Base is InventorySystem.Items.Firearms.)
-        //    {
-        //        //damage /= (firearm.Base.ActionModule as PumpAction).LastFiredAmount * 8;
-        //        //FieldInfo info = typeof(BuckshotHitreg).GetField("_buckshotSettingsProvider", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-        //        //damage /= ((BuckshotHitreg.BuckshotSettings)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
-        //        PropertyInfo info = typeof(BuckshotHitreg).GetProperty("CurBuckshotSettings", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-        //        damage /= (float)((BuckshotHitreg.)info.GetValue(ev.Firearm.Base.HitregModule as BuckshotHitreg)).MaxHits;
-        //    }
-        //    Health -= damage;
-        //    Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
-        //    CheckDead(ev.Player, damage);
-        //}
-
-        //public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
-        //{
-        //    if (!ev.IsAllowed || !IsAlive) return;
-        //    if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ItemType.GrenadeHE) == null) return;
-        //    if (ev.Projectile.Type == ItemType.GrenadeHE)
-        //    {
-        //        float Dis = Vector3.Distance(this.transform.position, ev.Position);
-        //        FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
-        //        float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
-        //        damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
-        //        //ServerConsole.AddLog(damage.ToString());
-        //        if (ev.Player != null && damage > 0) Hitmarker.SendHitmarkerDirectly(ev.Player.ReferenceHub, 1f);
-        //        Health -= damage;
-        //        CheckDead(ev.Player, damage);
-        //    }
-        //}
+        public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
+        {
+            if (!ev.IsAllowed || !IsAlive || !Active) return;
+            if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ItemType.GrenadeHE) == null) return;
+            if (ev.Projectile.Type == ItemType.GrenadeHE)
+            {
+                float Dis = Vector3.Distance(this.transform.position, ev.Position);
+                FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+                float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
+                damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient, damage, 50);
+                CheckDead(ev.Player, damage);
+            }
+        }
 
         public void CheckDead(Player player, float damage)
         {
@@ -268,6 +246,12 @@ namespace AdvancedMERTools
                                 case DeadType.GiveEffect:
                                     EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
                                     break;
+                                case DeadType.PlayAudio:
+                                    AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
+                                    break;
+                                case DeadType.CallGroovieNoise:
+                                    CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
+                                    break;
                             }
                         }
                     }
@@ -319,12 +303,11 @@ namespace AdvancedMERTools
 
         void OnDestroy()
         {
+            AdvancedMERTools.Singleton.codeClassPair.Remove(Base.Code);
             AdvancedMERTools.Singleton.healthObjects.Remove(this);
         }
 
         bool AnimationEnded = false;
-
-        //float animationkey = 0;
 
         public float Health;
 
