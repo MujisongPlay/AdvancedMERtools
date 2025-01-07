@@ -11,8 +11,6 @@ using MapEditorReborn.API.Features.Serializable;
 using MapEditorReborn.API.Features.Objects;
 using Exiled.API.Features.Doors;
 using Exiled.Events.EventArgs.Player;
-using SCPSLAudioApi;
-using SCPSLAudioApi.AudioCore;
 using System.IO;
 using Utf8Json;
 using System.Reflection.Emit;
@@ -172,36 +170,36 @@ namespace AdvancedMERTools
 
         public void Apply()
         {
-            ReferenceHub hub = AdvancedMERTools.MakeAudio(out int id);
-            MEC.Timing.CallDelayed(0.35f, () =>
-            {
-                hub.authManager.UserId = "ID_Dedicated";
-                //Central Core.
-                hub.authManager.NetworkSyncedUserId = "ID_Dedicated";
-                hub.nicknameSync.DisplayName = $"{id}-Gate";
-                hub.characterClassManager.GodMode = true;
-                hub.transform.localScale = Vector3.one * -0.01f;
-                foreach (Player player in Player.List)
-                {
-                    Server.SendSpawnMessage.Invoke(null, new object[]
-                    {
-                        hub.netIdentity,
-                        player.Connection
-                    });
-                }
-                FirstPersonMovementModule module = (hub.roleManager.CurrentRole as FpcStandardRoleBase).FpcModule;
-                //Preventer.
-                module.Position = this.transform.position - Vector3.up * 0.1f;
-                module.Motor.ReceivedPosition = new RelativePosition(this.transform.position - Vector3.up * 0.1f);
-                module.Noclip.IsActive = true;
-            });
+            //ReferenceHub hub = AdvancedMERTools.MakeAudio(out int id);
+            //MEC.Timing.CallDelayed(0.35f, () =>
+            //{
+            //    hub.authManager.UserId = "ID_Dedicated";
+            //    //Central Core.
+            //    hub.authManager.NetworkSyncedUserId = "ID_Dedicated";
+            //    hub.nicknameSync.DisplayName = $"{id}-Gate";
+            //    hub.characterClassManager.GodMode = true;
+            //    hub.transform.localScale = Vector3.one * -0.01f;
+            //    foreach (Player player in Player.List)
+            //    {
+            //        Server.SendSpawnMessage.Invoke(null, new object[]
+            //        {
+            //            hub.netIdentity,
+            //            player.Connection
+            //        });
+            //    }
+            //    FirstPersonMovementModule module = (hub.roleManager.CurrentRole as FpcStandardRoleBase).FpcModule;
+            //    //Preventer.
+            //    module.Position = this.transform.position - Vector3.up * 0.1f;
+            //    module.Motor.ReceivedPosition = new RelativePosition(this.transform.position - Vector3.up * 0.1f);
+            //    module.Noclip.IsActive = true;
+            //});
             //MEC.Timing.CallDelayed(0.45f, () =>
             //{
             //    PropertyInfo info = typeof(CentralAuth.PlayerAuthenticationManager).GetProperty("InstanceMode");
             //    info.SetValue(hub.authManager, CentralAuth.ClientInstanceMode.DedicatedServer);
             //    //hub.authManager.UserId = null;
             //});
-            audioPlayer = AudioPlayerBase.Get(hub);
+            //audioPlayer = AudioPlayerBase.Get(hub);
         }
 
         void Update()
@@ -278,9 +276,9 @@ namespace AdvancedMERTools
             {
                 if (animator != null)
                 {
-                    audioPlayer.CurrentPlay = Path.Combine(Path.Combine(Paths.Configs, "Music"), value ? "GateOpen.ogg" : "GateClose.ogg");
-                    audioPlayer.Loop = false;
-                    audioPlayer.Play(-1);
+                    //audioPlayer.CurrentPlay = Path.Combine(Path.Combine(Paths.Configs, "Music"), value ? "GateOpen.ogg" : "GateClose.ogg");
+                    //audioPlayer.Loop = false;
+                    //audioPlayer.Play(-1);
                     animator.Play(value ? "GateOpen" : "GateClose");
                 }
                 Cooldown = 3f;
@@ -293,6 +291,6 @@ namespace AdvancedMERTools
         bool _IsOpened = false;
         public Animator animator;
         public Exiled.API.Features.Pickups.Pickup[] pickups;
-        AudioPlayerBase audioPlayer;
+        //AudioPlayerBase audioPlayer;
     }
 }
