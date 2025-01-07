@@ -112,6 +112,8 @@ namespace AdvancedMERTools
 
         void RunProcess(Collider collider)
         {
+            if (!Active)
+                return;
             bool flag = false;
             Player target = null;
             Pickup pickup = Pickup.Get(collider.gameObject);
@@ -198,6 +200,12 @@ namespace AdvancedMERTools
                             break;
                         case ColliderActionType.GiveEffect:
                             EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), target);
+                            break;
+                        case ColliderActionType.PlayAudio:
+                            AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
+                            break;
+                        case ColliderActionType.CallGroovieNoise:
+                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
                             break;
                     }
                 }
