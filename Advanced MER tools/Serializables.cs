@@ -6,7 +6,43 @@ using System.ComponentModel;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using System.Reflection;
 //using NaughtyAttributes;
+
+public class FakeMono : MonoBehaviour
+{
+	[Header("Used for GroovyNoise")]
+	[JsonIgnore]
+	public int ScriptId;
+	private void OnValidate()
+	{
+		PublicFunctions.AMERTs.Add(this);
+		int t = GetInstanceID();
+		if (ScriptId != t)
+		{
+			PublicFunctions.OnIDChange(ScriptId, t);
+			ScriptId = t;
+		}
+	}
+}
+
+[Serializable]
+public class CGNModule : RandomExecutionModule
+{
+	public int GroovieNoiseId;
+	public bool Enable;
+}
+
+[Serializable]
+public class DTO
+{
+	public bool Active;
+	[HideInInspector]
+	public string ObjectId;
+	[HideInInspector]
+	public int Code;
+	//public List<CGNModule> GroovieNoiseToCall;
+}
 
 [Flags]
 [Serializable]
@@ -18,7 +54,9 @@ public enum ColliderActionType
 	PlayAnimation = 8,
 	SendCommand = 16,
 	Warhead = 32,
-	Explode = 64
+	Explode = 64,
+	PlayAudio = 128,
+	CallGroovieNoise = 256,
 }
 
 [Flags]
@@ -27,7 +65,7 @@ public enum CollisionType
 {
 	OnEnter = 1,
 	OnStay = 2,
-	OnExit = 4
+	OnExit = 4,
 }
 
 [Flags]
@@ -206,22 +244,17 @@ public enum DeadType
 	PlayAnimation = 32,
 	Warhead = 64,
 	SendMessage = 128,
-	DropItems = 256,
+    DropItems = 256,
 	SendCommand = 512,
-	GiveEffect = 1024
-}
-
-[Serializable]
-public class GroovyModule : RandomExecutionModule
-{
-	public List<MonoBehaviour> Activator;
-	public bool Enable;
+	GiveEffect = 1024,
+	PlayAudio = 2048,
+	CallGroovieNoise = 4096
 }
 
 [Serializable]
 public class GMDTO : RandomExecutionModule
 {
-	public List<int> codes;
+	public List<int> Targets;
 	public bool Enable;
 }
 
@@ -236,11 +269,18 @@ public class MessageModule : RandomExecutionModule
 	public float Duration;
 }
 
-//[Serializable]
-//public class AudioModule : RandomExecutionModule
-//{
-//	public string AudioName = ".ogg";
-//}
+[Serializable]
+public class AudioModule : RandomExecutionModule
+{
+    public string AudioName;
+	[Header("0: Loop")]
+	public int PlayCount;
+	public bool IsSpatial;
+	public float MaxDistance;
+	public float MinDistance;
+	public float Volume;
+	public SVector3 LocalPlayPosition;
+}
 
 [Serializable]
 public class RandomExecutionModule
@@ -350,11 +390,11 @@ public class WhitelistWeapon
 [Serializable]
 public enum Scp914Mode
 {
-	Rough = 0,
-	Coarse = 1,
-	OneToOne = 2,
-	Fine = 3,
-	VeryFine = 4
+	Rough = 1,
+	Coarse = 2,
+	OneToOne = 4,
+	Fine = 8,
+	VeryFine = 16
 }
 
 [Flags]
@@ -369,7 +409,9 @@ public enum IPActionType
 	DropItems = 32,
 	SendCommand = 64,
 	UpgradeItem = 128,
-	GiveEffect = 256
+	GiveEffect = 256,
+	PlayAudio = 512,
+	CallGroovieNoise = 1024
 }
 
 [Flags]
@@ -404,4 +446,48 @@ public class PublicFunctions
 		}
 		return path;
 	}
+
+	public static void OnIDChange(int original, int New)
+    {
+		//Debug.Log("!!");
+		AMERTs.RemoveWhere(x => x == null);
+		//Debug.Log(AMERTs.Count);
+		foreach (FakeMono noise in AMERTs)
+        {
+			if (noise is GroovyNoise && (noise as GroovyNoise).data.Settings != null)
+            {
+				foreach (GMDTO id in (noise as GroovyNoise).data.Settings)
+				{
+					for (int i = 0; i < id.Targets.Count; i++)
+					{
+						if (id.Targets[i] == original)
+						{
+							id.Targets[i] = New;
+						}
+					}
+				}
+			}
+			else
+            {
+				//Debug.Log(noise.GetType());
+                object arr;
+				object obj;
+				FieldInfo info = noise.GetType().GetField("data", BindingFlags.Instance | BindingFlags.Public);
+                if (info != null && (obj = info.GetValue(noise)) != null)
+                {
+					FieldInfo info1 = obj.GetType().GetField("GroovieNoiseToCall", BindingFlags.Instance | BindingFlags.Public);
+					if (info1 != null && (arr = info1.GetValue(obj)) != null)
+					{
+						foreach (CGNModule module in (List<CGNModule>)arr)
+						{
+							if (module.GroovieNoiseId == original)
+								module.GroovieNoiseId = New;
+						}
+					}
+                }
+            }
+        }
+    }
+
+	public static HashSet<FakeMono> AMERTs = new HashSet<FakeMono> { };
 }
