@@ -2,18 +2,13 @@
 
 ![image](https://github.com/Maciupek/AdvancedMERtools/blob/main/AMERT.png?raw=true)
 
-> [!IMPORTANT]  
-> This plugin requires NaughtyAttributes, which can be installed from the Unity Asset Store: [NaughtyAttributes](https://assetstore.unity.com/packages/tools/utilities/naughtyattributes-129996)
-
 ## Installation Instructions
-1. Install NaughtyAttributes from the link above
-2. Import NaughtyAttributes from the Unity Package Manager (Window > Package Manager)
-3. Download the necessary files from the specified folder above.
-4. Drag and drop the files into the 'Project' tab in the Unity Editor. Preferably to `DONT TOUCH/Scripts`
-5. In the release tab, you will find a plugin that facilitates the execution of functions and modeling for LCZ, HCZ, and EZ doors.
+1. Download the necessary files from the specified folder above.
+2. Drag and drop the files into the 'Project' tab in the Unity Editor. Preferably to `DONT TOUCH/Scripts`
+3. In the release tab, you will find a plugin that facilitates the execution of functions and modeling for LCZ, HCZ, and EZ doors.
 
-Additionally, download the SCPSLAudioAPI from the following link:
-[SCPSLAudioAPI](https://github.com/CedModV2/SCPSLAudioApi)
+Additionally, download the AudioPlayerApi from the following link:
+[AudioPlayerApi](https://github.com/Killers0992/AudioPlayerApi)
 Then, place the `AMERTAudioModule.dll` file in the `Roaming\SCPSL\PluginAPI\Global\Dependencies` directory.
 
 ## AdvancedMERtools Description
@@ -31,9 +26,6 @@ AdvancedMERtools offers advanced tools for the SCP: SL plugin called MapEditorRe
 - **Text**: Adds text to set empty object.
 - **Custom RGBA**: Extends the minimum and maximum RGBA values beyond 0-255 to enhance object glow.
 - **Converter**: Converts Unity's primitives into MER's components if placed accidentally. Activating it will also automatically color your primitives based on the set material.
-
-> [!NOTE]
-> Applying the same script from parent to children objects is not recommended as it may lead to unexpected errors. Please use scripts individually.
 
 ## Tutorials
 - Arrange Tutorial: [Watch Tutorial](https://youtu.be/adXuM0UINhE)
