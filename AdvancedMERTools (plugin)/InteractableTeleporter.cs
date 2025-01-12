@@ -26,7 +26,6 @@ namespace AdvancedMERTools
             if (transform.TryGetComponent<TeleportObject>(out TO))
             {
                 AdvancedMERTools.Singleton.InteractableTPs.Add(this);
-                AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             }
             else
             {
@@ -117,7 +116,7 @@ namespace AdvancedMERTools
                             AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
                             break;
                         case IPActionType.CallGroovieNoise:
-                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
+                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
                             break;
                     }
                 }
