@@ -15,6 +15,7 @@ using Mirror;
 using InventorySystem;
 using InventorySystem.Items;
 using InventorySystem.Items.Pickups;
+using System.IO;
 
 namespace AdvancedMERTools
 {
@@ -49,11 +50,13 @@ namespace AdvancedMERTools
         public override void Execute(params object[] args)
         {
             List<CGNModule> gs = args[0] as List<CGNModule>;
+            SchematicObject schematic = args[1] as SchematicObject;
             foreach (CGNModule mDTO in gs)
             {
                 MEC.Timing.CallDelayed(mDTO.ActionDelay, () =>
                 {
-                    if (AdvancedMERTools.Singleton.codeClassPair.TryGetValue(mDTO.GroovieNoiseId, out AMERTInteractable v)) 
+                    //ServerConsole.AddLog("!!");
+                    if (AdvancedMERTools.Singleton.codeClassPair[schematic].TryGetValue(mDTO.GroovieNoiseId, out AMERTInteractable v)) 
                         v.Active = mDTO.Enable;
                 });
             }
@@ -171,11 +174,16 @@ namespace AdvancedMERTools
         public override void Execute(params object[] args)
         {
             List<GMDTO> gs = args[0] as List<GMDTO>;
+            SchematicObject schematic = args[1] as SchematicObject;
             foreach (GMDTO mDTO in gs)
             {
                 MEC.Timing.CallDelayed(mDTO.ActionDelay, () => 
                 {
-                    mDTO.Targets.ForEach(x => { if (AdvancedMERTools.Singleton.codeClassPair.TryGetValue(x, out AMERTInteractable v)) v.Active = mDTO.Enable; });
+                    mDTO.Targets.ForEach(x =>
+                    {
+                        if (AdvancedMERTools.Singleton.codeClassPair[schematic].TryGetValue(x, out AMERTInteractable v))
+                            v.Active = mDTO.Enable;
+                    });
                 });
             }
         }
@@ -192,11 +200,12 @@ namespace AdvancedMERTools
     [Serializable]
     public class AMERTInteractable : NetworkBehaviour
     {
-        void Start()
+        void OnDestroy()
         {
-            Active = Base.Active;
+            AdvancedMERTools.Singleton.codeClassPair[OSchematic].Remove(Base.Code);
         }
 
+        public SchematicObject OSchematic;
         public AMERTDTO Base;
         public bool Active;
     }
@@ -327,6 +336,7 @@ namespace AdvancedMERTools
         public float Volume;
         public SVector3 LocalPlayPosition;
         public AudioPlayer AP;
+        bool loaded;
 
         public override void Execute(params object[] args)
         {
@@ -334,15 +344,29 @@ namespace AdvancedMERTools
             Transform tf = args[1] as Transform;
             foreach (AudioModule module in audios)
             {
+                if (!module.loaded)
+                {
+                    if (!Directory.Exists(AdvancedMERTools.Singleton.Config.AudioFolderPath))
+                    {
+                        ServerConsole.AddLog("Cannot find Audio Folder Directory!", ConsoleColor.Red);
+                        continue;
+                    }
+                    if (!AudioClipStorage.AudioClips.ContainsKey(module.AudioName))
+                        AudioClipStorage.LoadClip(Path.Combine(AdvancedMERTools.Singleton.Config.AudioFolderPath, module.AudioName), module.AudioName);
+                    module.loaded = true;
+                }
                 if (module.AP == null)
                 {
-                    module.AP = AudioPlayer.Create("");
-                    module.AP.AddSpeaker("Primary", tf.TransformPoint(module.LocalPlayPosition), module.Volume, module.IsSpatial, module.MinDistance, module.MaxDistance);
+                    module.AP = AudioPlayer.Create($"AudioHandler-{tf.GetHashCode()}-{module.GetHashCode()}");
+                    Speaker speaker = module.AP.AddSpeaker("Primary", tf.TransformPoint(module.LocalPlayPosition), module.Volume, module.IsSpatial, module.MinDistance, module.MaxDistance);
+                    module.AP.transform.parent = speaker.transform.parent = tf;
+                    module.AP.transform.localPosition = speaker.transform.localPosition = module.LocalPlayPosition;
+                    //ServerConsole.AddLog(speaker.transform.position.ToPreciseString());
                 }
                 if (module.PlayCount == 0)
-                    module.AP.AddClip(module.AudioName, module.Volume, true);
+                    module.AP.AddClip(module.AudioName, module.Volume, true, false);
                 for (int i = 0; i < module.PlayCount; i++)
-                    module.AP.AddClip(module.AudioName, module.Volume, false);
+                    module.AP.AddClip(module.AudioName, module.Volume, false, false);
             }
         }
     }
