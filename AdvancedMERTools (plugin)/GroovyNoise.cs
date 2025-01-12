@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,7 +23,6 @@ namespace AdvancedMERTools
         {
             Base = base.Base as GNDTO;
             AdvancedMERTools.Singleton.groovyNoises.Add(this);
-            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             //MEC.Timing.CallDelayed(0.1f, () => 
             //{
             //    if (AdvancedMERTools.Singleton.groovyNoises.All(x => x.Base.GMDTOs.Select(y => y.codes).All(y => !y.Contains(Base.Code))))
@@ -35,7 +34,8 @@ namespace AdvancedMERTools
         {
             if (Active)
             {
-                GMDTO.GetSingleton<GMDTO>().Execute(GMDTO.SelectList<GMDTO>(Base.Settings));
+                //ServerConsole.AddLog("!!!");
+                GMDTO.GetSingleton<GMDTO>().Execute(GMDTO.SelectList<GMDTO>(Base.Settings), OSchematic);
             }
             Active = false;
         }
