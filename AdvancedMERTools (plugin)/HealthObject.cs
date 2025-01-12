@@ -70,7 +70,6 @@ namespace AdvancedMERTools
                 }
             });
             AdvancedMERTools.Singleton.healthObjects.Add(this);
-            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
         }
 
         static Dictionary<ExplosionType, ItemType> ExplosionDic = new Dictionary<ExplosionType, ItemType>
@@ -250,7 +249,7 @@ namespace AdvancedMERTools
                                     AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
                                     break;
                                 case DeadType.CallGroovieNoise:
-                                    CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
+                                    CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
                                     break;
                             }
                         }
@@ -301,11 +300,10 @@ namespace AdvancedMERTools
             Destroy(this.gameObject);
         }
 
-        void OnDestroy()
-        {
-            AdvancedMERTools.Singleton.codeClassPair.Remove(Base.Code);
-            AdvancedMERTools.Singleton.healthObjects.Remove(this);
-        }
+        //void OnDestroy()
+        //{
+        //    AdvancedMERTools.Singleton.healthObjects.Remove(this);
+        //}
 
         bool AnimationEnded = false;
 
