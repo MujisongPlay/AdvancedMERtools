@@ -27,7 +27,6 @@ namespace AdvancedMERTools
         {
             this.Base = base.Base as CCDTO;
             AdvancedMERTools.Singleton.CustomColliders.Add(this);
-            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             CustomCollider[] customColliders = gameObject.GetComponents<CustomCollider>();
             if (customColliders.Length > 1 && customColliders[0] != this)
             {
@@ -205,7 +204,7 @@ namespace AdvancedMERTools
                             AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
                             break;
                         case ColliderActionType.CallGroovieNoise:
-                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
+                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
                             break;
                     }
                 }
