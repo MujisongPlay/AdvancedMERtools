@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Exiled.API.Features;
 using Exiled.Loader;
 using Exiled.API.Interfaces;
+using System.IO;
 
 namespace AdvancedMERTools
 {
@@ -49,6 +50,7 @@ namespace AdvancedMERTools
         //public bool AutoRunWithEveryDoor { get; set; } = false;
         public bool CustomSpawnPointEnable { get; set; } = true;
         //public bool UseExperimentalFeature { get; set; } = false;
+        public string AudioFolderPath { get; set; } = Path.Combine(Paths.Configs, "Music");
 
         [Serializable]
         public enum EventList
