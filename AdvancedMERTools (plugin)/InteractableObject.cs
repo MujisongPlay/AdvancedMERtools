@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,7 +24,6 @@ namespace AdvancedMERTools
         {
             this.Base = base.Base as IODTO;
             AdvancedMERTools.Singleton.interactableObjects.Add(this);
-            AdvancedMERTools.Singleton.codeClassPair.Add(Base.Code, this);
             if (AdvancedMERTools.Singleton.IOkeys.ContainsKey(Base.InputKeyCode))
             {
                 AdvancedMERTools.Singleton.IOkeys[Base.InputKeyCode].Add(this);
@@ -124,7 +123,7 @@ namespace AdvancedMERTools
                             AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
                             break;
                         case IPActionType.CallGroovieNoise:
-                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall));
+                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
                             break;
                     }
                 }
