@@ -9,41 +9,6 @@ using UnityEngine;
 using System.Reflection;
 //using NaughtyAttributes;
 
-public class FakeMono : MonoBehaviour
-{
-	[Header("Used for GroovyNoise")]
-	[JsonIgnore]
-	public int ScriptId;
-	private void OnValidate()
-	{
-		PublicFunctions.AMERTs.Add(this);
-		int t = GetInstanceID();
-		if (ScriptId != t)
-		{
-			PublicFunctions.OnIDChange(ScriptId, t);
-			ScriptId = t;
-		}
-	}
-}
-
-[Serializable]
-public class CGNModule : RandomExecutionModule
-{
-	public int GroovieNoiseId;
-	public bool Enable;
-}
-
-[Serializable]
-public class DTO
-{
-	public bool Active;
-	[HideInInspector]
-	public string ObjectId;
-	[HideInInspector]
-	public int Code;
-	//public List<CGNModule> GroovieNoiseToCall;
-}
-
 [Flags]
 [Serializable]
 public enum ColliderActionType
@@ -57,6 +22,7 @@ public enum ColliderActionType
 	Explode = 64,
 	PlayAudio = 128,
 	CallGroovieNoise = 256,
+	CallFunction = 512,
 }
 
 [Flags]
@@ -77,24 +43,6 @@ public enum DetectType
 	Projectile = 4
 }
 
-[Serializable]
-public class EffectGivingModule : RandomExecutionModule
-{
-	public EffectFlag EffectFlag;
-	public EffectType effectType;
-	public SendType GivingTo;
-	public byte Inensity;
-	public float Duration;
-}
-
-[Serializable]
-public class ExplodeModule : RandomExecutionModule
-{
-	public bool FFon;
-	public bool EffectOnly;
-	public SVector3 LocalPosition;
-}
-
 [Flags]
 [Serializable]
 public enum EffectFlag
@@ -107,105 +55,117 @@ public enum EffectFlag
 	ForceIntensity = 32
 }
 
+[Serializable]
 public enum EffectType
 {
-	// Token: 0x0400034F RID: 847
 	None,
-	// Token: 0x04000350 RID: 848
-	AmnesiaItems,
-	// Token: 0x04000351 RID: 849
-	AmnesiaVision,
-	// Token: 0x04000352 RID: 850
-	Asphyxiated,
-	// Token: 0x04000353 RID: 851
-	Bleeding,
-	// Token: 0x04000354 RID: 852
-	Blinded,
-	// Token: 0x04000355 RID: 853
-	Burned,
-	// Token: 0x04000356 RID: 854
-	Concussed,
-	// Token: 0x04000357 RID: 855
-	Corroding,
-	// Token: 0x04000358 RID: 856
-	Deafened,
-	// Token: 0x04000359 RID: 857
-	Decontaminating,
-	// Token: 0x0400035A RID: 858
-	Disabled,
-	// Token: 0x0400035B RID: 859
-	Ensnared,
-	// Token: 0x0400035C RID: 860
-	Exhausted,
-	// Token: 0x0400035D RID: 861
-	Flashed,
-	// Token: 0x0400035E RID: 862
-	Hemorrhage,
-	// Token: 0x0400035F RID: 863
-	Invigorated,
-	// Token: 0x04000360 RID: 864
-	BodyshotReduction,
-	// Token: 0x04000361 RID: 865
-	Poisoned,
-	// Token: 0x04000362 RID: 866
-	Scp207,
-	// Token: 0x04000363 RID: 867
-	Invisible,
-	// Token: 0x04000364 RID: 868
-	SinkHole,
-	// Token: 0x04000365 RID: 869
-	DamageReduction,
-	// Token: 0x04000366 RID: 870
-	MovementBoost,
-	// Token: 0x04000367 RID: 871
-	RainbowTaste,
-	// Token: 0x04000368 RID: 872
-	SeveredHands,
-	// Token: 0x04000369 RID: 873
-	Stained,
-	// Token: 0x0400036A RID: 874
-	Vitality,
 	// Token: 0x0400036B RID: 875
-	Hypothermia,
+	AmnesiaItems,
 	// Token: 0x0400036C RID: 876
-	Scp1853,
+	AmnesiaVision,
 	// Token: 0x0400036D RID: 877
-	CardiacArrest,
+	Asphyxiated,
 	// Token: 0x0400036E RID: 878
-	InsufficientLighting,
+	Bleeding,
 	// Token: 0x0400036F RID: 879
-	SoundtrackMute,
+	Blinded,
 	// Token: 0x04000370 RID: 880
-	SpawnProtected,
+	Burned,
 	// Token: 0x04000371 RID: 881
-	Traumatized,
+	Concussed,
 	// Token: 0x04000372 RID: 882
-	AntiScp207,
+	Corroding,
 	// Token: 0x04000373 RID: 883
-	Scanned,
+	Deafened,
 	// Token: 0x04000374 RID: 884
-	PocketCorroding,
+	Decontaminating,
 	// Token: 0x04000375 RID: 885
-	SilentWalk,
+	Disabled,
 	// Token: 0x04000376 RID: 886
+	Ensnared,
+	// Token: 0x04000377 RID: 887
+	Exhausted,
+	// Token: 0x04000378 RID: 888
+	Flashed,
+	// Token: 0x04000379 RID: 889
+	Hemorrhage,
+	// Token: 0x0400037A RID: 890
+	Invigorated,
+	// Token: 0x0400037B RID: 891
+	BodyshotReduction,
+	// Token: 0x0400037C RID: 892
+	Poisoned,
+	// Token: 0x0400037D RID: 893
+	Scp207,
+	// Token: 0x0400037E RID: 894
+	Invisible,
+	// Token: 0x0400037F RID: 895
+	SinkHole,
+	// Token: 0x04000380 RID: 896
+	DamageReduction,
+	// Token: 0x04000381 RID: 897
+	MovementBoost,
+	// Token: 0x04000382 RID: 898
+	RainbowTaste,
+	// Token: 0x04000383 RID: 899
+	SeveredHands,
+	// Token: 0x04000384 RID: 900
+	Stained,
+	// Token: 0x04000385 RID: 901
+	Vitality,
+	// Token: 0x04000386 RID: 902
+	Hypothermia,
+	// Token: 0x04000387 RID: 903
+	Scp1853,
+	// Token: 0x04000388 RID: 904
+	CardiacArrest,
+	// Token: 0x04000389 RID: 905
+	InsufficientLighting,
+	// Token: 0x0400038A RID: 906
+	SoundtrackMute,
+	// Token: 0x0400038B RID: 907
+	SpawnProtected,
+	// Token: 0x0400038C RID: 908
+	Traumatized,
+	// Token: 0x0400038D RID: 909
+	AntiScp207,
+	// Token: 0x0400038E RID: 910
+	Scanned,
+	// Token: 0x0400038F RID: 911
+	PocketCorroding,
+	// Token: 0x04000390 RID: 912
+	SilentWalk,
+	// Token: 0x04000391 RID: 913
 	[Obsolete("Not functional in-game")]
 	Marshmallow,
-	// Token: 0x04000377 RID: 887
+	// Token: 0x04000392 RID: 914
 	Strangled,
-	// Token: 0x04000378 RID: 888
+	// Token: 0x04000393 RID: 915
 	Ghostly,
-	// Token: 0x04000379 RID: 889
+	// Token: 0x04000394 RID: 916
 	FogControl,
-	// Token: 0x0400037A RID: 890
+	// Token: 0x04000395 RID: 917
 	Slowness,
-	// Token: 0x0400037B RID: 891
+	// Token: 0x04000396 RID: 918
 	Scp1344,
-	// Token: 0x0400037C RID: 892
+	// Token: 0x04000397 RID: 919
 	SeveredEyes,
-	// Token: 0x0400037D RID: 893
+	// Token: 0x04000398 RID: 920
 	PitDeath,
-	// Token: 0x0400037E RID: 894
-	Blurred
+	// Token: 0x04000399 RID: 921
+	Blurred,
+	// Token: 0x0400039A RID: 922
+	[Obsolete("Only availaible for Christmas and AprilFools.")]
+	BecomingFlamingo,
+	// Token: 0x0400039B RID: 923
+	[Obsolete("Only availaible for Christmas and AprilFools.")]
+	Scp559,
+	// Token: 0x0400039C RID: 924
+	[Obsolete("Only availaible for Christmas and AprilFools.")]
+	Scp956Target,
+	// Token: 0x0400039D RID: 925
+	[Obsolete("Only availaible for Christmas and AprilFools.")]
+	Snowed
 }
 
 [Flags]
@@ -215,21 +175,6 @@ public enum TeleportInvokeType
 	Enter = 1,
 	Exit = 2,
 	Collide = 4
-}
-
-[Serializable]
-public class AnimationDTO : RandomExecutionModule
-{
-	[JsonIgnore]
-	public GameObject Animator;
-	[HideInInspector]
-	public string AnimatorAdress;
-	public string AnimationName;
-	public AnimationType AnimationType;
-	public ParameterType ParameterType;
-	public string ParameterName;
-	[Header("If parameter type is bool or trigger, input 0 for false, and input 1 for true.")]
-	public string ParameterValue;
 }
 
 [Flags]
@@ -248,46 +193,8 @@ public enum DeadType
 	SendCommand = 512,
 	GiveEffect = 1024,
 	PlayAudio = 2048,
-	CallGroovieNoise = 4096
-}
-
-[Serializable]
-public class GMDTO : RandomExecutionModule
-{
-	public List<int> Targets;
-	public bool Enable;
-}
-
-[Serializable]
-public class MessageModule : RandomExecutionModule
-{
-	public SendType SendType;
-	[Tooltip("{p_i} = player id.\n{p_name}\n{p_pos}\n{p_room}\n{p_zone}\n{p_role}\n{o_pos} = object's exact position.\n{o_room}\n{o_zone}\n{p_item} = player's current item." +
-		"\n{damage} (HealthObject only)")]
-	public string MessageContent;
-	public MessageType MessageType;
-	public float Duration;
-}
-
-[Serializable]
-public class AudioModule : RandomExecutionModule
-{
-    public string AudioName;
-	[Header("0: Loop")]
-	public int PlayCount;
-	public bool IsSpatial;
-	public float MaxDistance;
-	public float MinDistance;
-	public float Volume;
-	public SVector3 LocalPlayPosition;
-}
-
-[Serializable]
-public class RandomExecutionModule
-{
-	public float ChanceWeight;
-	public bool ForceExecute;
-	public float ActionDelay;
+	CallGroovieNoise = 4096,
+	CallFunction = 8192
 }
 
 [Flags]
@@ -337,55 +244,6 @@ public enum SendType
 	Spectators = 8
 }
 
-[Serializable]
-public class DropItem : RandomExecutionModule
-{
-	public ItemType ItemType;
-	public uint CustomItemId;
-	public int Count;
-	public SVector3 DropLocalPosition;
-}
-
-[Serializable]
-public class Commanding : RandomExecutionModule
-{
-	[Tooltip("{p_i} = player id.\n{p_name}\n{p_pos}\n{p_room}\n{p_zone}\n{p_role}\n{o_pos} = object's exact position.\n{o_room}\n{o_zone}\n{p_item} = attacker's current item." +
-		"\n{damage} (HealthObject only)")]
-	public string CommandContext;
-}
-
-[Serializable]
-public class SVector3
-{
-	public float x;
-	public float y;
-	public float z;
-}
-
-
-//Unused serializable.
-//[Serializable]
-//public enum CommandType
-//{
-//	RemoteAdmin,
-//	ClientConsole
-//}
-
-//[Serializable]
-//public enum ExecutorType
-//{
-//	Attacker,
-//	LocalAdmin
-//}
-
-
-[Serializable]
-public class WhitelistWeapon
-{
-	public ItemType ItemType;
-	public uint CustomItemId;
-}
-
 [Flags]
 [Serializable]
 public enum Scp914Mode
@@ -411,7 +269,8 @@ public enum IPActionType
 	UpgradeItem = 128,
 	GiveEffect = 256,
 	PlayAudio = 512,
-	CallGroovieNoise = 1024
+	CallGroovieNoise = 1024,
+	CallFunction = 2048,
 }
 
 [Flags]
@@ -424,6 +283,13 @@ public enum InvokeType
 
 public class PublicFunctions
 {
+	public static string FindPath(GameObject mono)
+    {
+		if (mono == null)
+			return "";
+		return FindPath(mono.transform);
+    }
+
 	public static string FindPath(Transform transform)
 	{
 		string path = "";
@@ -431,7 +297,7 @@ public class PublicFunctions
 		{
 			return path;
 		}
-		while (true)
+		while (transform.parent != null)
 		{
 			for (int i = 0; i < transform.parent.childCount; i++)
 			{
