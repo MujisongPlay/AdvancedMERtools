@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,14 +23,19 @@ namespace AdvancedMERTools
 {
     public class CustomCollider : AMERTInteractable
     {
-        void Start()
+        protected virtual void Start()
         {
             this.Base = base.Base as CCDTO;
+            Register();
+        }
+
+        protected void Register()
+        {
             AdvancedMERTools.Singleton.CustomColliders.Add(this);
             CustomCollider[] customColliders = gameObject.GetComponents<CustomCollider>();
             if (customColliders.Length > 1 && customColliders[0] != this)
             {
-                MEC.Timing.CallDelayed(0.1f, () => 
+                MEC.Timing.CallDelayed(0.1f, () =>
                 {
                     meshCollider = customColliders[0].meshCollider;
                 });
@@ -60,36 +65,17 @@ namespace AdvancedMERTools
 
             //if (Base.Invisible)
             //{
-                transform.GetComponentsInChildren<AdminToys.PrimitiveObjectToy>().ForEach(x => 
-                {
-                    x.gameObject.SetActive(false);
-                    NetworkServer.Destroy(x.gameObject);
-                });
+            transform.GetComponentsInChildren<AdminToys.PrimitiveObjectToy>().ForEach(x =>
+            {
+                x.gameObject.SetActive(false);
+                NetworkServer.Destroy(x.gameObject);
+            });
             //}
             //meshCollider.contactOffset = Base.ContactOffSet;
 
             transform.position = vs[0];
             transform.eulerAngles = vs[1];
         }
-
-        //void OnCollisionEnter(Collision other)
-        //{
-        //    ServerConsole.AddLog(".");
-        //    if (Base.CollisionType.HasFlag(CollisionType.OnEnter))
-        //        RunProcess(other.collider);
-        //}
-
-        //void OnCollisionExit(Collision other)
-        //{
-        //    if (Base.CollisionType.HasFlag(CollisionType.OnExit))
-        //        RunProcess(other.collider);
-        //}
-
-        //void OnCollisionStay(Collision other)
-        //{
-        //    if (Base.CollisionType.HasFlag(CollisionType.OnStay))
-        //        RunProcess(other.collider);
-        //}
 
         void OnTriggerEnter(Collider collider)
         {
@@ -109,7 +95,7 @@ namespace AdvancedMERTools
                 RunProcess(collider);
         }
 
-        void RunProcess(Collider collider)
+        public virtual void RunProcess(Collider collider)
         {
             if (!Active)
                 return;
@@ -133,80 +119,35 @@ namespace AdvancedMERTools
             }
             if (!flag)
                 return;
+            ModuleGeneralArguments args = new ModuleGeneralArguments { player = target, TargetCalculated = false, transform = this.transform, schematic = OSchematic, interpolations = Formatter, interpolationsList = new object[] { target, gameObject } };
+            var colliderActionExecutors = new Dictionary<ColliderActionType, Action>
+{
+    { ColliderActionType.ModifyHealth, () =>
+        {
+            if (target != null)
+            {
+                if (Base.ModifyHealthAmount > 0)
+                    target.Heal(Base.ModifyHealthAmount);
+                else
+                    target.Hurt(-1 * Base.ModifyHealthAmount);
+            }
+        }
+    },
+    { ColliderActionType.Explode, () => ExplodeModule.Execute(Base.ExplodeModules, args) },
+    { ColliderActionType.PlayAnimation, () => AnimationDTO.Execute(Base.AnimationModules, args) },
+    { ColliderActionType.Warhead, () => AlphaWarhead(Base.warheadActionType) },
+    { ColliderActionType.SendMessage, () => MessageModule.Execute(Base.MessageModules, args) },
+    { ColliderActionType.SendCommand, () => Commanding.Execute(Base.commandings, args) },
+    { ColliderActionType.GiveEffect, () => EffectGivingModule.Execute(Base.effectGivingModules, args) },
+    { ColliderActionType.PlayAudio, () => AudioModule.Execute(Base.AudioModules, args) },
+    { ColliderActionType.CallGroovieNoise, () => CGNModule.Execute(Base.GroovieNoiseToCall, args) },
+    { ColliderActionType.CallFunction, () => CFEModule.Execute(Base.FunctionToCall, args) }
+};
             foreach (ColliderActionType type in Enum.GetValues(typeof(ColliderActionType)))
             {
-                if (Base.ColliderActionType.HasFlag(type))
+                if (Base.ColliderActionType.HasFlag(type) && colliderActionExecutors.TryGetValue(type, out var execute))
                 {
-                    switch (type)
-                    {
-                        case ColliderActionType.ModifyHealth:
-                            if (target != null)
-                            {
-                                if (Base.ModifyHealthAmount > 0)
-                                    target.Heal(Base.ModifyHealthAmount);
-                                else
-                                    target.Hurt(-1 * Base.ModifyHealthAmount);
-                            }
-                            break;
-                        case ColliderActionType.Explode:
-                            ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, target.ReferenceHub);
-                            break;
-                        case ColliderActionType.PlayAnimation:
-                            if (modules.Count == 0)
-                            {
-                                modules = AnimationModule.GetModules(Base.AnimationModules, this.gameObject);
-                                if (modules.Count == 0)
-                                {
-                                    break;
-                                }
-                            }
-                            AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
-                            break;
-                        case ColliderActionType.Warhead:
-                            foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
-                            {
-                                if (Base.warheadActionType.HasFlag(warhead))
-                                {
-                                    switch (warhead)
-                                    {
-                                        case WarheadActionType.Start:
-                                            Warhead.Start();
-                                            break;
-                                        case WarheadActionType.Stop:
-                                            Warhead.Stop();
-                                            break;
-                                        case WarheadActionType.Lock:
-                                            Warhead.IsLocked = true;
-                                            break;
-                                        case WarheadActionType.UnLock:
-                                            Warhead.IsLocked = false;
-                                            break;
-                                        case WarheadActionType.Disable:
-                                            Warhead.LeverStatus = false;
-                                            break;
-                                        case WarheadActionType.Enable:
-                                            Warhead.LeverStatus = true;
-                                            break;
-                                    }
-                                }
-                            }
-                            break;
-                        case ColliderActionType.SendMessage:
-                            MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, target, gameObject);
-                            break;
-                        case ColliderActionType.SendCommand:
-                            Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.commandings), Formatter, target, gameObject);
-                            break;
-                        case ColliderActionType.GiveEffect:
-                            EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), target);
-                            break;
-                        case ColliderActionType.PlayAudio:
-                            AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
-                            break;
-                        case ColliderActionType.CallGroovieNoise:
-                            CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
-                            break;
-                    }
+                    execute();
                 }
             }
         }
@@ -234,8 +175,76 @@ namespace AdvancedMERTools
 
         public new CCDTO Base;
 
-        public List<AnimationModule> modules = new List<AnimationModule> { };
-
         public Transform originalT;
+    }
+
+    public class FCustomCollider : CustomCollider
+    {
+        protected override void Start()
+        {
+            Base = ((AMERTInteractable)this).Base as FCCDTO;
+            Register();
+        }
+
+        public override void RunProcess(Collider collider)
+        {
+            if (!Active)
+                return;
+            bool flag = false;
+            Player target = null;
+            Pickup pickup = Pickup.Get(collider.gameObject);
+            CollisionType collision = Base.DetectType.GetValue<CollisionType>(new FunctionArgument(this), 0);
+            if (collision.HasFlag(DetectType.Pickup) && pickup != null)
+            {
+                target = pickup.PreviousOwner;
+                flag = true;
+            }
+            if (collision.HasFlag(DetectType.Player) && Player.TryGet(collider, out target))
+            {
+                flag = target.Role.Base.ActiveTime > 0.25f;
+            }
+            ThrownProjectile projectile = collider.GetComponentInParent<ThrownProjectile>();
+            if (collision.HasFlag(DetectType.Projectile) && projectile != null)
+            {
+                target = Player.Get(projectile.PreviousOwner);
+                flag = true;
+            }
+            if (!flag)
+                return;
+            FunctionArgument args = new FunctionArgument(this, target);
+            var colliderActionExecutors = new Dictionary<ColliderActionType, Action>
+{
+    { ColliderActionType.ModifyHealth, () =>
+        {
+            if (target != null)
+            {
+                float amount = Base.ModifyHealthAmount.GetValue(args, 0f);
+                if (amount > 0)
+                    target.Heal(amount);
+                else
+                    target.Hurt(-amount);
+            }
+        }
+    },
+    { ColliderActionType.Explode, () => FExplodeModule.Execute(Base.ExplodeModules, args) },
+    { ColliderActionType.PlayAnimation, () => FAnimationDTO.Execute(Base.AnimationModules, args) },
+    { ColliderActionType.Warhead, () => AlphaWarhead(Base.warheadActionType.GetValue<WarheadActionType>(args, 0)) },
+    { ColliderActionType.SendMessage, () => FMessageModule.Execute(Base.MessageModules, args) },
+    { ColliderActionType.SendCommand, () => FCommanding.Execute(Base.commandings, args) },
+    { ColliderActionType.GiveEffect, () => FEffectGivingModule.Execute(Base.effectGivingModules, args) },
+    { ColliderActionType.PlayAudio, () => FAudioModule.Execute(Base.AudioModules, args) },
+    { ColliderActionType.CallGroovieNoise, () => FCGNModule.Execute(Base.GroovieNoiseToCall, args) },
+    { ColliderActionType.CallFunction, () => FCFEModule.Execute(Base.FunctionToCall, args) },
+};
+            foreach (ColliderActionType type in Enum.GetValues(typeof(ColliderActionType)))
+            {
+                if (Base.ColliderActionType.HasFlag(type) && colliderActionExecutors.TryGetValue(type, out var execute))
+                {
+                    execute();
+                }
+            }
+        }
+
+        public new FCCDTO Base;
     }
 }

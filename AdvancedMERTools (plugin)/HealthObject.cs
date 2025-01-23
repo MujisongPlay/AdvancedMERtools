@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,13 +51,16 @@ namespace AdvancedMERTools
 
     public class HealthObject : AMERTInteractable, IDestructible
     {
-        private void Start()
+        protected virtual void Start()
         {
             this.Base = base.Base as HODTO;
             Health = Base.Health;
-            //ServerConsole.AddLog("!");
-            //transform.GetComponentsInChildren<Transform>().ForEach(x => x.gameObject.layer = LayerMask.GetMask("Glass"));
-            this.transform.GetComponentsInChildren<PrimitiveObjectToy>().ForEach(x => 
+            Register();
+        }
+
+        protected void Register()
+        {
+            this.transform.GetComponentsInChildren<PrimitiveObjectToy>().ForEach(x =>
             {
                 if (x.gameObject.TryGetComponent<Healther>(out Healther healther))
                 {
@@ -72,7 +75,7 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.healthObjects.Add(this);
         }
 
-        static Dictionary<ExplosionType, ItemType> ExplosionDic = new Dictionary<ExplosionType, ItemType>
+        protected static Dictionary<ExplosionType, ItemType> ExplosionDic = new Dictionary<ExplosionType, ItemType>
         {
             { ExplosionType.Grenade, ItemType.GrenadeHE },
             { ExplosionType.Disruptor, ItemType.ParticleDisruptor },
@@ -82,7 +85,7 @@ namespace AdvancedMERTools
             { ExplosionType.SCP018, ItemType.SCP018 }
         };
 
-        public bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
+        public virtual bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
         {
             if (!IsAlive || !Active)
                 return false;
@@ -139,7 +142,7 @@ namespace AdvancedMERTools
             return true;
         }
 
-        public void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
+        public virtual void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
         {
             if (!ev.IsAllowed || !IsAlive || !Active) return;
             if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId == 0 && x.ItemType == ItemType.GrenadeHE) == null) return;
@@ -153,7 +156,7 @@ namespace AdvancedMERTools
             }
         }
 
-        public void CheckDead(Player player, float damage)
+        public virtual void CheckDead(Player player, float damage)
         {
             Health -= damage;
             Hitmarker.SendHitmarkerDirectly(player.ReferenceHub, damage / 10f);
@@ -167,91 +170,42 @@ namespace AdvancedMERTools
                     ObjectId = this.Base.ObjectId
                 };
                 IsAlive = false;
+                ModuleGeneralArguments args = new ModuleGeneralArguments { interpolations = Formatter, interpolationsList = new object[] { player, transform }, player = player, schematic = OSchematic, transform = transform, TargetCalculated = false };
                 EventHandler.OnHealthObjectDead(new HealthObjectDeadEventArgs(clone, player));
                 MEC.Timing.CallDelayed(Base.DeadActionDelay, () =>
                 {
+                    var deadTypeExecutors = new Dictionary<DeadType, Action>
+{
+    { DeadType.Disappear, () => Destroy(this.gameObject, 0.1f) },
+    { DeadType.GetRigidbody, () =>
+        {
+            MakeNonStatic(gameObject);
+            this.gameObject.AddComponent<Rigidbody>();
+        }
+    },
+    { DeadType.DynamicDisappearing, () => MakeNonStatic(gameObject) },
+    { DeadType.Explode, () => ExplodeModule.Execute(Base.ExplodeModules, args) },
+    { DeadType.ResetHP, () =>
+        {
+            Health = Base.ResetHPTo == 0 ? Base.Health : Base.ResetHPTo;
+            IsAlive = true;
+        }
+    },
+    { DeadType.PlayAnimation, () => AnimationDTO.Execute(Base.AnimationModules, args) },
+    { DeadType.Warhead, () => AlphaWarhead(Base.warheadAction) },
+    { DeadType.SendMessage, () => MessageModule.Execute(Base.MessageModules, args) },
+    { DeadType.DropItems, () => DropItem.Execute(Base.DropItems, args) },
+    { DeadType.SendCommand, () => Commanding.Execute(Base.Commandings, args) },
+    { DeadType.GiveEffect, () => EffectGivingModule.Execute(Base.effectGivingModules, args) },
+    { DeadType.PlayAudio, () => AudioModule.Execute(Base.AudioModules, args) },
+    { DeadType.CallGroovieNoise, () => CGNModule.Execute(Base.GroovieNoiseToCall, args) },
+    { DeadType.CallFunction, () => CFEModule.Execute(Base.FunctionToCall, args) }
+};
                     foreach (DeadType type in Enum.GetValues(typeof(DeadType)))
                     {
-                        if (Base.DeadType.HasFlag(type))
+                        if (Base.DeadType.HasFlag(type) && deadTypeExecutors.TryGetValue(type, out var execute))
                         {
-                            switch (type)
-                            {
-                                case DeadType.Disappear:
-                                    Destroy(this.gameObject, 0.1f);
-                                    break;
-                                case DeadType.GetRigidbody:
-                                    MakeNonStatic(gameObject);
-                                    this.gameObject.AddComponent<Rigidbody>();
-                                    break;
-                                case DeadType.DynamicDisappearing:
-                                    MakeNonStatic(gameObject);
-                                    break;
-                                case DeadType.Explode:
-                                    ExplodeModule.GetSingleton<ExplodeModule>().Execute(ExplodeModule.SelectList<ExplodeModule>(Base.ExplodeModules), this.transform, player.ReferenceHub);
-                                    break;
-                                case DeadType.ResetHP:
-                                    Health = Base.ResetHPTo == 0 ? Base.Health : Base.ResetHPTo;
-                                    IsAlive = true;
-                                    break;
-                                case DeadType.PlayAnimation:
-                                    if (modules.Count == 0)
-                                    {
-                                        modules = AnimationModule.GetModules(Base.AnimationModules, this.gameObject);
-                                        if (modules.Count == 0)
-                                        {
-                                            break;
-                                        }
-                                    }
-                                    AnimationModule.GetSingleton<AnimationModule>().Execute(AnimationModule.SelectList<AnimationModule>(modules));
-                                    break;
-                                case DeadType.Warhead:
-                                    foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
-                                    {
-                                        if (Base.warheadAction.HasFlag(warhead))
-                                        {
-                                            switch (warhead)
-                                            {
-                                                case WarheadActionType.Start:
-                                                    Warhead.Start();
-                                                    break;
-                                                case WarheadActionType.Stop:
-                                                    Warhead.Stop();
-                                                    break;
-                                                case WarheadActionType.Lock:
-                                                    Warhead.IsLocked = true;
-                                                    break;
-                                                case WarheadActionType.UnLock:
-                                                    Warhead.IsLocked = false;
-                                                    break;
-                                                case WarheadActionType.Disable:
-                                                    Warhead.LeverStatus = false;
-                                                    break;
-                                                case WarheadActionType.Enable:
-                                                    Warhead.LeverStatus = true;
-                                                    break;
-                                            }
-                                        }
-                                    }
-                                    break;
-                                case DeadType.SendMessage:
-                                    MessageModule.GetSingleton<MessageModule>().Execute(MessageModule.SelectList<MessageModule>(Base.MessageModules), Formatter, player, this.transform, damage);
-                                    break;
-                                case DeadType.DropItems:
-                                    DropItem.GetSingleton<DropItem>().Execute(DropItem.SelectList<DropItem>(Base.DropItems), this.transform);
-                                    break;
-                                case DeadType.SendCommand:
-                                    Commanding.GetSingleton<Commanding>().Execute(Commanding.SelectList<Commanding>(Base.Commandings), Formatter, player, this.transform, damage);
-                                    break;
-                                case DeadType.GiveEffect:
-                                    EffectGivingModule.GetSingleton<EffectGivingModule>().Execute(EffectGivingModule.SelectList<EffectGivingModule>(Base.effectGivingModules), player);
-                                    break;
-                                case DeadType.PlayAudio:
-                                    AudioModule.GetSingleton<AudioModule>().Execute(AudioModule.SelectList<AudioModule>(Base.AudioModules), this.transform);
-                                    break;
-                                case DeadType.CallGroovieNoise:
-                                    CGNModule.GetSingleton<CGNModule>().Execute(CGNModule.SelectList<CGNModule>(Base.GroovieNoiseToCall), OSchematic);
-                                    break;
-                            }
+                            execute();
                         }
                     }
                 });
@@ -293,17 +247,12 @@ namespace AdvancedMERTools
             }
         }
 
-        void Destroy()
+        protected virtual void Destroy()
         {
             AnimationEnded = true;
             if (Base.DoNotDestroyAfterDeath) return;
             Destroy(this.gameObject);
         }
-
-        //void OnDestroy()
-        //{
-        //    AdvancedMERTools.Singleton.healthObjects.Remove(this);
-        //}
 
         bool AnimationEnded = false;
 
@@ -312,8 +261,6 @@ namespace AdvancedMERTools
         public bool IsAlive = true;
 
         public new HODTO Base;
-
-        public List<AnimationModule> modules = new List<AnimationModule> { };
 
         public uint NetworkId
         {
@@ -330,5 +277,156 @@ namespace AdvancedMERTools
                 return Vector3.zero;
             }
         }
+    }
+
+    public class FHealthObject : HealthObject
+    {
+        protected override void Start()
+        {
+            this.Base = ((AMERTInteractable)this).Base as FHODTO;
+            Health = Base.Health.GetValue(new FunctionArgument(this), 100f);
+            Register();
+        }
+
+        public override bool Damage(float damage, DamageHandlerBase handler, Vector3 pos)
+        {
+            if (!IsAlive || !Active)
+                return false;
+            //ServerConsole.AddLog("1");
+            Player attacker = null;
+            AttackerDamageHandler damageHandler = handler as AttackerDamageHandler;
+            if (damageHandler != null)
+            {
+                //ServerConsole.AddLog("2");
+                attacker = Player.Get(damageHandler.Attacker);
+                FunctionArgument args = new FunctionArgument(this, attacker);
+                FirearmDamageHandler firearm = handler as FirearmDamageHandler;
+                ExplosionDamageHandler explosion = handler as ExplosionDamageHandler;
+                if (firearm != null)
+                {
+                    //ServerConsole.AddLog("3");
+                    if (Base.whitelistWeapons.Count == 0 || Base.whitelistWeapons.Any(x =>
+                    {
+                        if (CustomItem.TryGet(attacker.CurrentItem, out CustomItem custom))
+                        {
+                            return custom.Id == x.CustomItemId.GetValue(args, 0);
+                        }
+                        else
+                        {
+                            return attacker.CurrentItem.Type == x.ItemType.GetValue(args, ItemType.None);
+                        }
+                    }))
+                    {
+                        //ServerConsole.AddLog("4");
+                        FieldInfo info = typeof(FirearmDamageHandler).GetField("_penetration", BindingFlags.NonPublic | BindingFlags.Instance);
+                        damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient.GetValue(args, 0), damage, Mathf.RoundToInt((float)info.GetValue(firearm) * 100f));
+                    }
+                    else
+                        return false;
+                }
+                //ServerConsole.AddLog("5");
+                if (explosion != null)
+                {
+                    if (Base.whitelistWeapons.Count != 0 && !Base.whitelistWeapons.Any(x =>
+                    {
+                        if (ExplosionDic.TryGetValue(explosion.ExplosionType, out ItemType item))
+                        {
+                            return item == x.ItemType.GetValue(args, ItemType.None);
+                        }
+                        return false;
+                    }))
+                    {
+                        return false;
+                    }
+                }
+                //ServerConsole.AddLog("6");
+            }
+            //ServerConsole.AddLog("7");
+            CheckDead(attacker, damage);
+            return true;
+        }
+
+        public override void OnGrenadeExplode(Exiled.Events.EventArgs.Map.ExplodingGrenadeEventArgs ev)
+        {
+            if (!ev.IsAllowed || !IsAlive || !Active) return;
+            FunctionArgument args = new FunctionArgument(this, ev.Player);
+            if (Base.whitelistWeapons.Count != 0 && Base.whitelistWeapons.Find(x => x.CustomItemId.GetValue(args, 0) == 0 && x.ItemType.GetValue(args, ItemType.None) == ItemType.GrenadeHE) == null) return;
+            if (ev.Projectile.Type == ItemType.GrenadeHE)
+            {
+                float Dis = Vector3.Distance(this.transform.position, ev.Position);
+                FieldInfo info = typeof(ExplosionGrenade).GetField("_playerDamageOverDistance", BindingFlags.NonPublic | BindingFlags.IgnoreCase | BindingFlags.Instance);
+                float damage = ((AnimationCurve)info.GetValue(ev.Projectile.Base as ExplosionGrenade)).Evaluate(Dis);
+                damage = BodyArmorUtils.ProcessDamage(Base.ArmorEfficient.GetValue(args, 0), damage, 50);
+                CheckDead(ev.Player, damage);
+            }
+        }
+
+        public override void CheckDead(Player player, float damage)
+        {
+            Health -= damage;
+            Hitmarker.SendHitmarkerDirectly(player.ReferenceHub, damage / 10f);
+            if (Health <= 0)
+            {
+                IsAlive = false;
+                FunctionArgument args = new FunctionArgument(this, player);
+                MEC.Timing.CallDelayed(Base.DeadActionDelay.GetValue(args, 0f), () =>
+                {
+                    var deadTypeExecutors = new Dictionary<DeadType, Action>
+{
+    { DeadType.Disappear, () => Destroy(this.gameObject, 0.1f) },
+    { DeadType.GetRigidbody, () =>
+        {
+            MakeNonStatic(gameObject);
+            this.gameObject.AddComponent<Rigidbody>();
+        }
+    },
+    { DeadType.DynamicDisappearing, () => MakeNonStatic(gameObject) },
+    { DeadType.Explode, () => FExplodeModule.Execute(Base.ExplodeModules, args) },
+    { DeadType.ResetHP, () =>
+        {
+            float RH = Base.ResetHPTo.GetValue(args, 0f);
+            Health = RH == 0 ? Base.Health.GetValue(args, 100f) : RH;
+            IsAlive = true;
+        }
+    },
+    { DeadType.PlayAnimation, () => FAnimationDTO.Execute(Base.AnimationModules, args) },
+    { DeadType.Warhead, () => AlphaWarhead(Base.warheadActionType.GetValue<WarheadActionType>(args, 0)) },
+    { DeadType.SendMessage, () => FMessageModule.Execute(Base.MessageModules, args) },
+    { DeadType.DropItems, () => FDropItem.Execute(Base.dropItems, args) },
+    { DeadType.SendCommand, () => FCommanding.Execute(Base.commandings, args) },
+    { DeadType.GiveEffect, () => FEffectGivingModule.Execute(Base.effectGivingModules, args) },
+    { DeadType.PlayAudio, () => FAudioModule.Execute(Base.AudioModules, args) },
+    { DeadType.CallGroovieNoise, () => FCGNModule.Execute(Base.GroovieNoiseToCall, args) },
+    { DeadType.CallFunction, () => FCFEModule.Execute(Base.FunctionToCall, args) },
+};
+                    foreach (DeadType type in Enum.GetValues(typeof(DeadType)))
+                    {
+                        if (Base.DeadType.HasFlag(type) && deadTypeExecutors.TryGetValue(type, out var execute))
+                        {
+                            execute();
+                        }
+                    }
+                });
+            }
+        }
+
+        void MakeNonStatic(GameObject game)
+        {
+            foreach (AdminToyBase adminToyBase in game.transform.GetComponentsInChildren<AdminToyBase>())
+            {
+                adminToyBase.enabled = true;
+            }
+        }
+
+        protected override void Destroy()
+        {
+            AnimationEnded = true;
+            if (Base.DoNotDestroyAfterDeath.GetValue(new FunctionArgument(this), false)) return;
+            Destroy(this.gameObject);
+        }
+
+        bool AnimationEnded = false;
+
+        public new FHODTO Base;
     }
 }

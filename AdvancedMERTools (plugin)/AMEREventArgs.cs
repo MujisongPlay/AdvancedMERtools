@@ -10,13 +10,13 @@ namespace AdvancedMERTools
 {
     public class HealthObjectDeadEventArgs : EventArgs, Exiled.Events.EventArgs.Interfaces.IExiledEvent
     {
-        public HealthObjectDeadEventArgs(HealthObjectDTO healthObject, Player Attacker)
+        public HealthObjectDeadEventArgs(HODTO healthObject, Player Attacker)
         {
             HealthObject = healthObject;
             Killer = Attacker;
         }
 
-        public HealthObjectDTO HealthObject;
+        public HODTO HealthObject;
         public Player Killer;
     }
 }

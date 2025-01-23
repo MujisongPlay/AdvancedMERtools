@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,7 +19,7 @@ namespace AdvancedMERTools
 {
     public class GroovyNoise : AMERTInteractable
     {
-        void Start()
+        protected virtual void Start()
         {
             Base = base.Base as GNDTO;
             AdvancedMERTools.Singleton.groovyNoises.Add(this);
@@ -30,16 +30,42 @@ namespace AdvancedMERTools
             //});
         }
 
-        void Update()
+        protected virtual void Update()
         {
             if (Active)
             {
                 //ServerConsole.AddLog("!!!");
-                GMDTO.GetSingleton<GMDTO>().Execute(GMDTO.SelectList<GMDTO>(Base.Settings), OSchematic);
+                GMDTO.Execute(Base.Settings, new ModuleGeneralArguments { schematic = OSchematic, transform = transform });
             }
             Active = false;
         }
 
         public new GNDTO Base;
+    }
+
+    public class FGroovyNoise : GroovyNoise
+    {
+        protected override void Start()
+        {
+            Base = ((AMERTInteractable)this).Base as FGNDTO;
+            AdvancedMERTools.Singleton.groovyNoises.Add(this);
+            //MEC.Timing.CallDelayed(0.1f, () => 
+            //{
+            //    if (AdvancedMERTools.Singleton.groovyNoises.All(x => x.Base.GMDTOs.Select(y => y.codes).All(y => !y.Contains(Base.Code))))
+            //        Active = true;
+            //});
+        }
+
+        protected override void Update()
+        {
+            if (Active)
+            {
+                //ServerConsole.AddLog("!!!");
+                FGMDTO.Execute(Base.Settings, new FunctionArgument(this));
+            }
+            Active = false;
+        }
+
+        public new FGNDTO Base;
     }
 }
