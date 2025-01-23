@@ -7,15 +7,24 @@ using System;
 using System.IO;
 using UnityEditor;
 using Newtonsoft.Json;
+using System.Linq;
 
 public class InteractablePickup : FakeMono
 {
-    public IPDTO data = new IPDTO();
+    public new IPDTO data = new IPDTO();
+    public new FIPDTO ScriptValueData = new FIPDTO();
+    public override DTO _data { get => data; }
+    public override DTO _ScriptValueData { get => ScriptValueData; }
 }
 
 [Serializable]
 public class IPDTO : DTO
 {
+    public override void OnValidate()
+    {
+        AnimationModules.ForEach(x => x.AnimatorAdress = PublicFunctions.FindPath(x.Animator));
+    }
+
     public InvokeType InvokeType;
     public IPActionType ActionType;
     public bool CancelActionWhenActive;
@@ -29,6 +38,42 @@ public class IPDTO : DTO
     public List<EffectGivingModule> effectGivingModules;
     public List<AudioModule> AudioModules;
     public List<CGNModule> GroovieNoiseToCall;
+    public List<CFEModule> FunctionToCall;
+}
+
+[Serializable]
+public class FIPDTO : DTO
+{
+    public override void OnValidate()
+    {
+        CancelActionWhenActive.OnValidate();
+        Scp914Mode.OnValidate();
+        warheadActionType.OnValidate();
+        AnimationModules.ForEach(x => { x.parent = this; x.OnValidate(); x.AnimatorAdress = PublicFunctions.FindPath(x.Animator); });
+        MessageModules.ForEach(x => x.OnValidate());
+        dropItems.ForEach(x => x.OnValidate());
+        commandings.ForEach(x => x.OnValidate());
+        ExplodeModules.ForEach(x => x.OnValidate());
+        effectGivingModules.ForEach(x => x.OnValidate());
+        AudioModules.ForEach(x => x.OnValidate());
+        GroovieNoiseToCall.ForEach(x => x.OnValidate());
+        FunctionToCall.ForEach(x => x.OnValidate());
+    }
+
+    public InvokeType InvokeType;
+    public IPActionType ActionType;
+    public ScriptValue CancelActionWhenActive;
+    public ScriptValue Scp914Mode;
+    public List<FAnimationDTO> AnimationModules;
+    public ScriptValue warheadActionType;
+    public List<FMessageModule> MessageModules;
+    public List<FDropItem> dropItems;
+    public List<FCommanding> commandings;
+    public List<FExplodeModule> ExplodeModules;
+    public List<FEffectGivingModule> effectGivingModules;
+    public List<FAudioModule> AudioModules;
+    public List<FCGNModule> GroovieNoiseToCall;
+    public List<FCFEModule> FunctionToCall;
 }
 
 public class InteractablePickupCompiler
@@ -60,27 +105,8 @@ public class InteractablePickupCompiler
 
         Directory.CreateDirectory(schematicDirectoryPath);
 
-        List<IPDTO> interactables = new List<IPDTO> { };
-
-        foreach (InteractablePickup ip in schematic.transform.GetComponentsInChildren<InteractablePickup>())
-        {
-            if (!ip.transform.TryGetComponent<PickupComponent>(out _))
-            {
-                Debug.Log("Interactable Pickup can only be used as a component of Pickup!");
-                continue;
-            }
-            ip.data.AnimationModules.ForEach(x => 
-            {
-                x.AnimatorAdress = PublicFunctions.FindPath(x.Animator.transform);
-            });
-            ip.data.Code = ip.GetInstanceID();
-            ip.data.ObjectId = PublicFunctions.FindPath(ip.transform);
-            interactables.Add(ip.data);
-        }
-
-        string serializedData = JsonConvert.SerializeObject(interactables, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-
-        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-Pickups.json"), serializedData);
+        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-Pickups.json"), JsonConvert.SerializeObject(schematic.transform.GetComponentsInChildren<InteractablePickup>().Where(x => !x.UseScriptValue).Select(x => x.data), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-FPickups.json"), JsonConvert.SerializeObject(schematic.transform.GetComponentsInChildren<InteractablePickup>().Where(x => x.UseScriptValue).Select(x => x.ScriptValueData).ToList(), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, TypeNameHandling = TypeNameHandling.Auto }).Replace("Assembly-CSharp", "AdvancedMERTools"));
         Debug.Log("Successfully Imported Interactable Pickups.");
     }
 }
