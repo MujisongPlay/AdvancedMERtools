@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,13 +11,31 @@ using Newtonsoft.Json;
 
 public class GroovyNoise : FakeMono
 {
-    public GNDTO data = new GNDTO();
+    public new GNDTO data = new();
+    public new FGNDTO ScriptValueData = new();
+    public override DTO _data { get => data; }
+    public override DTO _ScriptValueData { get => ScriptValueData; }
 }
 
 [Serializable]
 public class GNDTO : DTO
 {
+    public override void OnValidate()
+    {
+    }
+
     public List<GMDTO> Settings;
+}
+
+[Serializable]
+public class FGNDTO : DTO
+{
+    public override void OnValidate()
+    {
+        Settings.ForEach(x => x.OnValidate());
+    }
+
+    public List<FGMDTO> Settings;
 }
 
 public class GroovyNoiseCompiler : MonoBehaviour
@@ -49,34 +67,8 @@ public class GroovyNoiseCompiler : MonoBehaviour
 
         Directory.CreateDirectory(schematicDirectoryPath);
 
-        List<GNDTO> groovies = new List<GNDTO> { };
-
-        foreach (GroovyNoise GN in schematic.transform.GetComponentsInChildren<GroovyNoise>())
-        {
-            GN.data.ObjectId = PublicFunctions.FindPath(GN.transform);
-            GN.data.Code = GN.GetInstanceID();
-            groovies.Add(GN.data);
-            //GNDTO dTO = new GNDTO
-            //{
-            //    Active = GN.Active
-            //};
-            //dTO.GMDTOs = new List<GMDTO> { };
-            //GN.Groovies.ForEach(x => dTO.GMDTOs.Add(new GMDTO
-            //{
-            //    ActionDelay = x.ActionDelay,
-            //    ChanceWeight = x.ChanceWeight,
-            //    ForceExecute = x.ForceExecute,
-            //    codes = x.Activator.Select(y => y.GetInstanceID()).ToList(),
-            //    Enable = x.Enable
-            //}));
-            //dTO.Code = GN.GetInstanceID();
-            //dTO.ObjectId = PublicFunctions.FindPath(GN.transform);
-            //groovies.Add(dTO);
-        }
-
-        string serializedData = JsonConvert.SerializeObject(groovies, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-
-        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-GroovyNoises.json"), serializedData);
+        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-GroovyNoises.json"), JsonConvert.SerializeObject(schematic.transform.GetComponentsInChildren<GroovyNoise>().Where(x => !x.UseScriptValue).Select(x => x.data), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }));
+        File.WriteAllText(Path.Combine(schematicDirectoryPath, $"{schematic.gameObject.name}-FGroovyNoises.json"), JsonConvert.SerializeObject(schematic.transform.GetComponentsInChildren<GroovyNoise>().Where(x => x.UseScriptValue).Select(x => x.ScriptValueData), Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore, TypeNameHandling = TypeNameHandling.Auto }).Replace("Assembly-CSharp", "AdvancedMERTools"));
         Debug.Log("Successfully Imported Groovy Noises!");
     }
 }
