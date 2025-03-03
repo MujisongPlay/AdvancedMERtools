@@ -224,12 +224,12 @@ namespace AdvancedMERTools
         {
             { "{p_i}", vs => (vs[0] as Player).Id.ToString() },
             { "{p_name}", vs => (vs[0] as Player).Nickname.ToString() },
-            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return $"{pos.x} {pos.y} {pos.z}"; } },
             { "{p_room}", vs => (vs[0] as Player).CurrentRoom.RoomName.ToString() },
             { "{p_zone}", vs => (vs[0] as Player).Zone.ToString() },
             { "{p_role}", vs => (vs[0] as Player).Role.Type.ToString() },
             { "{p_item}", vs => (vs[0] as Player).CurrentItem.Type.ToString() },
-            { "{o_pos}", vs => { Vector3 pos = (vs[1] as Transform).position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{o_pos}", vs => { Vector3 pos = (vs[1] as Transform).position; return $"{pos.x} {pos.y} {pos.z}"; } },
             { "{o_room}", vs => Room.Get((vs[1] as Transform).position).RoomName.ToString() },
             { "{o_zone}", vs => Room.Get((vs[1] as Transform).position).Zone.ToString() },
             { "{damage}", vs => (vs[2] as float?).ToString() }

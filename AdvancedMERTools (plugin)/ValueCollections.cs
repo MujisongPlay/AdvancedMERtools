@@ -9,6 +9,9 @@ using System.Reflection;
 using Exiled.API.Enums;
 using System.Linq;
 using Exiled.API.Features;
+using InventorySystem.Items.Pickups;
+using Exiled.API.Features.Items;
+using Exiled.API.Features.Pickups;
 
 namespace AdvancedMERTools
 {
@@ -64,7 +67,7 @@ namespace AdvancedMERTools
             string str = (string)Value.Clone();
             for (int i = 0; i < StringInterpolations.Count; i++)
             {
-                str.Replace("{" + i.ToString() + "}", StringInterpolations[i].GetValue(args).ToString());
+                str = str.Replace("{" + i.ToString() + "}", StringInterpolations[i].GetValue(args).ToString());
             }
             return str;
         }
@@ -216,7 +219,7 @@ namespace AdvancedMERTools
             switch (Math.Min(3, Math.Max(0, AccessLevel.GetValue(args, 0))))
             {
                 case 0:
-                    return args.Function.FunctionVariables.TryGetValue(str, out object value) ? value : null;
+                    return args.FunctionVariables.TryGetValue(str, out object value) ? value : null;
                 case 1:
                     return args.Function.ScriptVariables.TryGetValue(str, out value) ? value : null;
                 case 2:
@@ -258,7 +261,7 @@ namespace AdvancedMERTools
         public override object GetValue(FunctionArgument args)
         {
             if (AdvancedMERTools.Singleton.FunctionExecutors[args.Function.OSchematic].TryGetValue(FunctionName.GetValue(args, ""), out FunctionExecutor function))
-                return function.data.Execute(new FunctionArgument { Arguments = this.Arguments.Select(x => x.GetValue(args)).ToList(), player = args.player });
+                return function.data.Execute(new FunctionArgument { Arguments = this.Arguments.Select(x => x.GetValue(args)).ToList(), player = args.player }).value;
             return null;
         }
     }
@@ -499,6 +502,7 @@ namespace AdvancedMERTools
             GetRandomValue,
             Shuffled,
             RemovedNull,
+            IsEmpty,
         }
 
         public ArrUnaryOpType Operator;
@@ -527,6 +531,8 @@ namespace AdvancedMERTools
                         return val.Select((x, y) => (x, y)).OrderBy(x => -x.y).Select(x => x.x).ToArray();
                     case ArrUnaryOpType.Shuffled:
                         return val.OrderBy(x => UnityEngine.Random.Range(int.MinValue, int.MaxValue)).ToArray();
+                    case ArrUnaryOpType.IsEmpty:
+                        return val.Length == 0;
                 }
             }
             return null;
@@ -899,6 +905,8 @@ namespace AdvancedMERTools
             ToInteger,
             ToReal,
             ToCharArray,
+            ToPlayerAsName,
+            ToItemAsName
         }
 
         public StrUnaryOpType Operator;
@@ -911,10 +919,7 @@ namespace AdvancedMERTools
 
         public override object GetValue(FunctionArgument args)
         {
-            object v = String.GetValue(args);
-            if (v == null || !(v is string))
-                return null;
-            string str = Convert.ToString(v);
+            string str = String.GetValue(args, "");
             switch (Operator)
             {
                 case StrUnaryOpType.Length:
@@ -943,6 +948,17 @@ namespace AdvancedMERTools
                             vs[i] = (char)(vs[i] - 'a' + 'A');
                     }
                     return new string(vs);
+                case StrUnaryOpType.ToPlayerAsName:
+                    if (Player.List.Any(x => x.Nickname == str))
+                    {
+                        return Player.List.First(x => x.Nickname == str);
+                    }
+                    return null;
+                case StrUnaryOpType.ToItemAsName:
+                    if (Enum.TryParse(str, out ItemType type))
+                        return type;
+                    return null;
+                    
             }
             return str;
         }
@@ -1238,7 +1254,24 @@ namespace AdvancedMERTools
     [Serializable]
     public class PlayerArray : Value
     {
-        public SendType Value;
+        public enum PlayerArrayType
+        {
+            AllPlayers,
+            AlivePlayers,
+            Scps,
+            ScpsExcludeScp0492,
+            Mtfs,
+            Chaos,
+            Dclass,
+            Scientist,
+            Spectators,
+            Guards,
+            FoundationSide,
+            AntiFoundationSide,
+            Humans,
+        }
+
+        public PlayerArrayType ArrayType;
 
         public override void OnValidate()
         {
@@ -1246,7 +1279,67 @@ namespace AdvancedMERTools
 
         public override object GetValue(FunctionArgument args)
         {
-            return RandomExecutionModule.GetTargets(Value, new ModuleGeneralArguments { player = args.player });
+            switch (ArrayType)
+            {
+                case PlayerArrayType.AlivePlayers:
+                    return Player.List.Where(x => x.IsAlive).ToArray();
+                case PlayerArrayType.AllPlayers:
+                    return Player.List.ToArray();
+                case PlayerArrayType.AntiFoundationSide:
+                    return Player.List.Where(x => x.LeadingTeam != LeadingTeam.FacilityForces).ToArray();
+                case PlayerArrayType.Chaos:
+                    return Player.List.Where(x => x.LeadingTeam == LeadingTeam.ChaosInsurgency && x.Role.Type != PlayerRoles.RoleTypeId.ClassD).ToArray();
+                case PlayerArrayType.Dclass:
+                    return Player.List.Where(x => x.Role.Type == PlayerRoles.RoleTypeId.ClassD).ToArray();
+                case PlayerArrayType.FoundationSide:
+                    return Player.List.Where(x => x.LeadingTeam == LeadingTeam.FacilityForces).ToArray();
+                case PlayerArrayType.Guards:
+                    return Player.List.Where(x => x.Role.Type == PlayerRoles.RoleTypeId.FacilityGuard).ToArray();
+                case PlayerArrayType.Humans:
+                    return Player.List.Where(x => x.IsHuman).ToArray();
+                case PlayerArrayType.Mtfs:
+                    return Player.List.Where(x => x.Role.Team == PlayerRoles.Team.FoundationForces && x.Role.Type != PlayerRoles.RoleTypeId.FacilityGuard).ToArray();
+                case PlayerArrayType.Scientist:
+                    return Player.List.Where(x => x.Role.Type == PlayerRoles.RoleTypeId.Scientist);
+                case PlayerArrayType.Scps:
+                    return Player.List.Where(x => x.Role.Team == PlayerRoles.Team.SCPs);
+                case PlayerArrayType.ScpsExcludeScp0492:
+                    return Player.List.Where(x => x.Role.Team == PlayerRoles.Team.SCPs && x.Role.Type != PlayerRoles.RoleTypeId.Scp0492);
+                case PlayerArrayType.Spectators:
+                    return Player.List.Where(x => x.Role.Type == PlayerRoles.RoleTypeId.Spectator).ToArray();
+            }
+            return null;
+        }
+    }
+
+    [Serializable]
+    public class SingleTarget : Value
+    {
+        public enum SingleTargetType
+        {
+            EventPlayer,
+            SchematicEntity,
+            ScriptEntity,
+        };
+
+        public SingleTargetType TargetType;
+
+        public override void OnValidate()
+        {
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            switch (TargetType)
+            {
+                case SingleTargetType.EventPlayer:
+                    return args.player;
+                case SingleTargetType.SchematicEntity:
+                    return args.schematic.gameObject;
+                case SingleTargetType.ScriptEntity:
+                    return args.transform.gameObject;
+            }
+            return null;
         }
     }
 
@@ -1277,6 +1370,317 @@ namespace AdvancedMERTools
         public override object GetValue(FunctionArgument args)
         {
             return Value;
+        }
+    }
+
+    [Serializable]
+    public class VRoleType : Value
+    {
+        public PlayerRoles.RoleTypeId Value;
+
+        public override void OnValidate()
+        {
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            return Value;
+        }
+    }
+
+    [Serializable]
+    public class ItemUnaryOp : Value
+    {
+        [Serializable]
+        public enum ItemUnaryOpType
+        {
+            ItemType,
+            Entity,
+            Owner,
+            PrevOwner
+        }
+
+        public ScriptValue ItemOrPickup;
+        public ItemUnaryOpType Operator;
+
+        public override void OnValidate()
+        {
+            ItemOrPickup.OnValidate();
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            Item item = ItemOrPickup.GetValue<Item>(args, null);
+            if (item != null)
+            {
+                switch (Operator)
+                {
+                    case ItemUnaryOpType.ItemType:
+                        return item.Type;
+                    case ItemUnaryOpType.Owner:
+                        return item.Owner;
+                }
+                return null;
+            }
+            ItemPickupBase pickup = ItemOrPickup.GetValue<ItemPickupBase>(args, null);
+            if (pickup != null)
+            {
+                switch (Operator)
+                {
+                    case ItemUnaryOpType.ItemType:
+                        return pickup.Info.ItemId;
+                    case ItemUnaryOpType.PrevOwner:
+                        return pickup.PreviousOwner;
+                }
+                return null;
+            }
+            return null;
+        }
+    }
+
+    [Serializable]
+    public class PlayerUnaryOp : Value
+    {
+        [Serializable]
+        public enum PlayerUnaryOpType
+        {
+            AHP,
+            Cuffer,
+            CurrentItem,
+            CurrentSpectatingPlayers,
+            CustomInfo,
+            CustomName,
+            DisplayNickname,
+            GroupName,
+            HP,
+            HumeShield,
+            Id,
+            IsAlive,
+            IsCHI,
+            IsCuffed,
+            IsDead,
+            IsFoundationSide,
+            IsFFon,
+            IsHuman,
+            IsInPocketDimension,
+            IsInventoryEmpty,
+            IsInventoryFull,
+            IsJumping,
+            IsNPC,
+            IsNTF,
+            IsReloading,
+            IsScp,
+            IsSpeaking,
+            IsTutorial,
+            IsUsingStamina,
+            Items,
+            MaxAHP,
+            MaxHP,
+            MaxHumeShield,
+            Position,
+            Role,
+            FacingDirection,
+            Scale,
+            Stamina,
+            EntityObject,
+            UniqueRole,
+            Velocity,
+        }
+
+        public PlayerUnaryOpType Operator;
+        public ScriptValue Player;
+
+        public override void OnValidate()
+        {
+            Player.OnValidate();
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            Player p = Player.GetValue<Player>(args, null);
+            if (p == null)
+                return null;
+            switch (Operator)
+            {
+                case PlayerUnaryOpType.AHP:
+                    return p.ArtificialHealth;
+                case PlayerUnaryOpType.Cuffer:
+                    return p.Cuffer;
+                case PlayerUnaryOpType.CurrentItem:
+                    return p.CurrentItem;
+                case PlayerUnaryOpType.CurrentSpectatingPlayers:
+                    return p.CurrentSpectatingPlayers.ToArray();
+                case PlayerUnaryOpType.CustomInfo:
+                    return p.CustomInfo;
+                case PlayerUnaryOpType.CustomName:
+                    return p.CustomName;
+                case PlayerUnaryOpType.DisplayNickname:
+                    return p.DisplayNickname;
+                case PlayerUnaryOpType.EntityObject:
+                    return p.GameObject;
+                case PlayerUnaryOpType.FacingDirection:
+                    return p.CameraTransform.forward;
+                case PlayerUnaryOpType.GroupName:
+                    return p.GroupName;
+                case PlayerUnaryOpType.HP:
+                    return p.Health;
+                case PlayerUnaryOpType.HumeShield:
+                    return p.HumeShield;
+                case PlayerUnaryOpType.Id:
+                    return p.Id;
+                case PlayerUnaryOpType.IsAlive:
+                    return p.IsAlive;
+                case PlayerUnaryOpType.IsCHI:
+                    return p.IsCHI;
+                case PlayerUnaryOpType.IsCuffed:
+                    return p.IsCuffed;
+                case PlayerUnaryOpType.IsDead:
+                    return p.IsDead;
+                case PlayerUnaryOpType.IsFFon:
+                    return p.IsFriendlyFireEnabled;
+                case PlayerUnaryOpType.IsFoundationSide:
+                    return p.Role.Side == Side.Mtf;
+                case PlayerUnaryOpType.IsHuman:
+                    return p.IsHuman;
+                case PlayerUnaryOpType.IsInPocketDimension:
+                    return p.IsInPocketDimension;
+                case PlayerUnaryOpType.IsInventoryEmpty:
+                    return p.IsInventoryEmpty;
+                case PlayerUnaryOpType.IsInventoryFull:
+                    return p.IsInventoryFull;
+                case PlayerUnaryOpType.IsJumping:
+                    return p.IsJumping;
+                case PlayerUnaryOpType.IsNPC:
+                    return p.IsNPC;
+                case PlayerUnaryOpType.IsNTF:
+                    return p.IsNTF;
+                case PlayerUnaryOpType.IsReloading:
+                    return p.CurrentItem != null && p.CurrentItem.Category == ItemCategory.Firearm && (p.CurrentItem as Exiled.API.Features.Items.Firearm).IsReloading;
+                case PlayerUnaryOpType.IsScp:
+                    return p.IsScp;
+                case PlayerUnaryOpType.IsSpeaking:
+                    return p.IsSpeaking;
+                case PlayerUnaryOpType.IsTutorial:
+                    return p.IsTutorial;
+                case PlayerUnaryOpType.IsUsingStamina:
+                    return p.IsUsingStamina;
+                case PlayerUnaryOpType.Items:
+                    return p.Items.ToArray();
+                case PlayerUnaryOpType.MaxAHP:
+                    return p.MaxArtificialHealth;
+                case PlayerUnaryOpType.MaxHP:
+                    return p.MaxHealth;
+                case PlayerUnaryOpType.MaxHumeShield:
+                    return p.MaxHumeShield;
+                case PlayerUnaryOpType.Position:
+                    return p.Position;
+                case PlayerUnaryOpType.Role:
+                    return p.Role.Type;
+                case PlayerUnaryOpType.Scale:
+                    return p.Scale;
+                case PlayerUnaryOpType.Stamina:
+                    return p.Stamina;
+                case PlayerUnaryOpType.UniqueRole:
+                    return p.UniqueRole;
+                case PlayerUnaryOpType.Velocity:
+                    return p.Velocity;
+            }
+            return p;
+        }
+    }
+
+    [Serializable]
+    public class EntityUnaryOp : Value
+    {
+        [Serializable]
+        public enum EntityUnaryOpType
+        {
+            Name,
+            Position,
+            Rotation,
+            Scale,
+            Parent,
+            IsActive,
+            ChildCount,
+            ToPlayer,
+            ToItemPickup,
+        }
+
+        public EntityUnaryOpType Operator;
+        public ScriptValue Entity;
+
+        public override void OnValidate()
+        {
+            Entity.OnValidate();
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            GameObject game = Entity.GetValue<GameObject>(args, null);
+            switch (Operator)
+            {
+                case EntityUnaryOpType.ChildCount:
+                    return game.transform.childCount;
+                case EntityUnaryOpType.IsActive:
+                    return game.activeInHierarchy;
+                case EntityUnaryOpType.Name:
+                    return game.name;
+                case EntityUnaryOpType.Parent:
+                    return game.transform.parent;
+                case EntityUnaryOpType.Position:
+                    return game.transform.position;
+                case EntityUnaryOpType.Rotation:
+                    return game.transform.rotation.eulerAngles;
+                case EntityUnaryOpType.Scale:
+                    return game.transform.localScale;
+                case EntityUnaryOpType.ToItemPickup:
+                    return Pickup.Get(game);
+                case EntityUnaryOpType.ToPlayer:
+                    return Player.Get(game);
+            }
+            return game;
+        }
+    }
+
+    [Serializable]
+    public class EntityBinomialOp : Value
+    {
+        [Serializable]
+        public enum EntityBinomialOpType
+        {
+            GetChildAt,
+            WorldToLocal,
+            LocalToWorld
+        }
+
+        public EntityBinomialOpType Operator;
+        public ScriptValue Entity;
+        public ScriptValue Value;
+
+        public override void OnValidate()
+        {
+            Entity.OnValidate();
+            Value.OnValidate();
+        }
+
+        public override object GetValue(FunctionArgument args)
+        {
+            GameObject game = Entity.GetValue<GameObject>(args, null);
+            if (game == null)
+                return null;
+            switch (Operator)
+            {
+                case EntityBinomialOpType.GetChildAt:
+                    int T = Value.GetValue(args, 0);
+                    return game.transform.GetChild(T);
+                case EntityBinomialOpType.LocalToWorld:
+                    Vector3 vec = Value.GetValue(args, Vector3.zero);
+                    return game.transform.TransformPoint(vec);
+                case EntityBinomialOpType.WorldToLocal:
+                    vec = Value.GetValue(args, Vector3.zero);
+                    return game.transform.InverseTransformPoint(vec);
+            }
+            return null;
         }
     }
 }

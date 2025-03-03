@@ -339,7 +339,7 @@ namespace AdvancedMERTools
             AdvancedMERTools.Singleton.AMERTGroup[OSchematic][Base.ScriptGroup].Remove(this);
         }
 
-        public void AlphaWarhead(WarheadActionType type)
+        public static void AlphaWarhead(WarheadActionType type)
         {
             foreach (WarheadActionType warhead in Enum.GetValues(typeof(WarheadActionType)))
             {
@@ -1009,7 +1009,7 @@ namespace AdvancedMERTools
             {
                 //ServerConsole.AddLog("!!!");
                 if (AdvancedMERTools.Singleton.FunctionExecutors[args.schematic].TryGetValue(FunctionName.GetValue(args, ""), out FunctionExecutor function))
-                    function.data.Execute(new FunctionArgument { Arguments = FunctionArguments.Select(x => x.GetValue(args)).ToList(), player = args.player });
+                    function.data.Execute(new FunctionArgument { Arguments = FunctionArguments.Select(x => x.GetValue(args)).ToList(), player = args.player, schematic = args.schematic });
             });
         }
     }

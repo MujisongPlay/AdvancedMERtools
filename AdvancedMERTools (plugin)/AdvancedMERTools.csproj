@@ -48,8 +48,9 @@
       <HintPath>..\..\..\AppData\Roaming\EXILED\Plugins\dependencies\AudioPlayerApi.dll</HintPath>
     </Reference>
     <Reference Include="CommandSystem.Core, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
-    <Reference Include="Exiled.API">
-      <HintPath>..\..\..\AppData\Roaming\EXILED\Plugins\dependencies\Exiled.API.dll</HintPath>
+    <Reference Include="Exiled.API, Version=9.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\AppData\Roaming\SCP Secret Laboratory\PluginAPI\plugins\global\dependencies\Exiled.API.dll</HintPath>
     </Reference>
     <Reference Include="Exiled.CustomItems">
       <HintPath>..\..\..\AppData\Roaming\EXILED\Plugins\Exiled.CustomItems.dll</HintPath>

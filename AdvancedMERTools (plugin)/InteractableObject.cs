@@ -93,7 +93,7 @@ namespace AdvancedMERTools
         {
             { "{p_i}", vs => (vs[0] as Player).Id.ToString() },
             { "{p_name}", vs => (vs[0] as Player).Nickname.ToString() },
-            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return string.Format("{0} {1} {2}", pos.x, pos.y, pos.z); } },
+            { "{p_pos}", vs => { Vector3 pos = (vs[0] as Player).Transform.position; return $"{pos.x} {pos.y} {pos.z}"; } },
             { "{p_room}", vs => (vs[0] as Player).CurrentRoom.RoomName.ToString() },
             { "{p_zone}", vs => (vs[0] as Player).Zone.ToString() },
             { "{p_role}", vs => (vs[0] as Player).Role.Type.ToString() },
@@ -115,7 +115,27 @@ namespace AdvancedMERTools
             }
             else
             {
-                ServerSpecificSettingsSync.DefinedSettings = ServerSpecificSettingsSync.DefinedSettings.Append(new SSKeybindSetting(null, $"AMERT - Interactable Object - {(KeyCode)Base.InputKeyCode}", (KeyCode)Base.InputKeyCode, true, "")).ToArray();
+                List<ServerSpecificSettingBase> original = ServerSpecificSettingsSync.DefinedSettings.ToList();
+                int index = original.FindIndex(x => x is SSGroupHeader && x.Label.Equals("AMERT Keybinds"));
+                bool flag = false;
+                SSKeybindSetting key = new SSKeybindSetting(null, $"AMERT - Interactable Object - {(KeyCode)Base.InputKeyCode}", (KeyCode)Base.InputKeyCode, true, "");
+                if (index == -1)
+                    original.Add(new SSGroupHeader("AMERT Keybinds"));
+                else
+                {
+                    for (index++; index < original.Count; index++)
+                    {
+                        if (original[index].Label == null || !original[index].Label.StartsWith("AMERT"))
+                        {
+                            flag = true;
+                            original.Insert(index, key);
+                            break;
+                        }
+                    }
+                }
+                if (!flag)
+                    original.Add(key);
+                ServerSpecificSettingsSync.DefinedSettings = original.ToArray();
                 ServerSpecificSettingsSync.SendToAll();
                 AdvancedMERTools.Singleton.IOkeys.Add(Base.InputKeyCode, new List<InteractableObject> { this });
             }

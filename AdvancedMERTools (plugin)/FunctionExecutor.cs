@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Reflection;
 using Exiled.API.Features;
 using MapEditorReborn.API.Features.Objects;
+using System.Threading.Tasks;
 
 namespace AdvancedMERTools
 {
@@ -25,7 +26,7 @@ namespace AdvancedMERTools
                 return;
             }
             AdvancedMERTools.Singleton.FunctionExecutors[OSchematic].Add(data.FunctionName, this);
-            data.OSchematic = OSchematic;
+            //data.OSchematic = OSchematic;
         }
 
         public FEDTO data;
@@ -44,18 +45,21 @@ namespace AdvancedMERTools
             this.player = player;
         }
 
-        public List<object> Arguments;
+        public List<object> Arguments = new List<object> { };
         public FEDTO Function;
         public Player player;
         public SchematicObject schematic;
         public Transform transform;
-        public List<(object, int)> Levels;
+        public List<(object, int)> Levels = new List<(object, int)> { };
+        public Dictionary<string, object> FunctionVariables = new Dictionary<string, object> { };
     }
 
     public class FunctionReturn
     {
         public object value;
         public FunctionResult result;
+
+        public static implicit operator FunctionReturn(Task<FunctionReturn> t) => t.Result;
     }
 
     public enum FunctionResult
@@ -65,6 +69,7 @@ namespace AdvancedMERTools
         Return,
         Continue,
         Break,
+        Wait
     }
 
     [Serializable]
@@ -72,11 +77,9 @@ namespace AdvancedMERTools
     {
         public override FunctionReturn Execute(FunctionArgument args)
         {
-            //ServerConsole.AddLog("!!!");
-            FunctionVariables.Clear();
             args.Function = this;
             if (!ConditionCheck(args, Conditions))
-                return new FunctionReturn { value = null };
+                return new FunctionReturn();
             return ExecuteActions(args, FunctionResult.Return);
         }
 
@@ -84,7 +87,6 @@ namespace AdvancedMERTools
         public string[] ArgumentsName;
         public SchematicObject OSchematic;
         public List<ScriptValue> Conditions;
-        public Dictionary<string, object> FunctionVariables = new Dictionary<string, object> { };
         public Dictionary<string, object> ScriptVariables = new Dictionary<string, object> { };
     }
 
@@ -106,6 +108,7 @@ namespace AdvancedMERTools
                         return new FunctionReturn { result = FunctionResult.Break };
                     case FunctionType.Continue:
                         return new FunctionReturn { result = FunctionResult.Continue };
+                        
                 }
                 return new FunctionReturn { result = FunctionResult.FunctionCheck };
             }
@@ -136,6 +139,10 @@ namespace AdvancedMERTools
         { FunctionType.Explode, typeof(Explode) },
         { FunctionType.GiveEffect, typeof(GiveEffect) },
         { FunctionType.PlayAudio, typeof(PlayAudio) },
+        { FunctionType.Warhead, typeof(FWarhead) },
+        { FunctionType.ChangePlayerValue, typeof(ChangePlayerValue) },
+        { FunctionType.PlayerAction, typeof(PlayerAction) },
+        { FunctionType.ChangeEntityValue, typeof(ChangeEntityValue) }
     };
     }
 
@@ -162,6 +169,10 @@ namespace AdvancedMERTools
         Explode,
         GiveEffect,
         PlayAudio,
+        Warhead,
+        ChangePlayerValue,
+        PlayerAction,
+        ChangeEntityValue
     }
 
     [Serializable]
@@ -212,7 +223,7 @@ namespace AdvancedMERTools
             return false;
         }
 
-        protected FunctionReturn ExecuteActions(FunctionArgument args, FunctionResult result = FunctionResult.Default)
+        protected async Task<FunctionReturn> ExecuteActions(FunctionArgument args, FunctionResult result = FunctionResult.Default)
         {
             bool IfActed = false;
             for (int i = 0; i < Actions.Count; i++)
@@ -231,6 +242,9 @@ namespace AdvancedMERTools
                     case FunctionResult.Continue:
                     case FunctionResult.Return:
                         return v;
+                    case FunctionResult.Wait:
+                        //await Task.Delay(Mathf.RoundToInt(Convert.ToSingle(v.value) * 1000f));
+                        break;
                 }
                 if (v.result == FunctionResult.FunctionCheck)
                 {
@@ -257,12 +271,16 @@ namespace AdvancedMERTools
         {
             if (value == null)
                 return null;
-            if (!EnumToV.TryGetValue(ValueType, out Type t))
-                return ValueType;
-            //if (t != value.GetType())
-            //{
-            //    value = 
-            //}
+            if (!EnumToV.TryGetValue(ValueType, out _))
+            {
+                switch (ValueType)
+                {
+                    case ValueType.ZeroVector:
+                        return Vector3.zero;
+                    case ValueType.EmptyArray:
+                        return new object[] { };
+                }
+            }
             return value.GetValue(args);
         }
         public T GetValue<T>(FunctionArgument args, T def)
@@ -322,7 +340,13 @@ namespace AdvancedMERTools
         { ValueType.MessageType, typeof(VMessageType) },
         { ValueType.PlayerArray, typeof(PlayerArray) },
         { ValueType.Scp914Mode, typeof(VScp914Mode) },
-        { ValueType.ItemType, typeof(VItemType) }
+        { ValueType.ItemType, typeof(VItemType) },
+        { ValueType.RoleType, typeof(VRoleType) },
+        { ValueType.PlayerUnaryOp, typeof(PlayerUnaryOp) },
+        { ValueType.SingleTarget, typeof(SingleTarget) },
+        { ValueType.ItemUnaryOp, typeof(ItemUnaryOp) },
+        { ValueType.EntityUnaryOp, typeof(EntityUnaryOp) },
+        { ValueType.EntityBinomialOp, typeof(EntityBinomialOp) }
     };
     }
 
@@ -333,6 +357,7 @@ namespace AdvancedMERTools
         Real,
         Bool,
         String,
+        Null,
         Compare,
         IfThenElse,
         EmptyArray,
@@ -357,14 +382,19 @@ namespace AdvancedMERTools
         CollisionDetectTarget,
         EffectType,
         EffectActionType,
-        TeleportInvokeType,
         WarheadActionType,
         AnimationActionType,
         ParameterType,
         MessageType,
         PlayerArray,
         Scp914Mode,
-        ItemType
+        ItemType,
+        RoleType,
+        SingleTarget,
+        ItemUnaryOp,
+        PlayerUnaryOp,
+        EntityUnaryOp,
+        EntityBinomialOp
     }
 
     [Serializable]

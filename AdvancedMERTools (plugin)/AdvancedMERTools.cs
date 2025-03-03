@@ -332,7 +332,8 @@ namespace AdvancedMERTools
                     AdvancedMERTools.Singleton.codeClassPair[ev.Schematic].Add(dto.Code, tclass);
                     if (!AdvancedMERTools.Singleton.AMERTGroup[ev.Schematic].ContainsKey(dto.ScriptGroup))
                         AdvancedMERTools.Singleton.AMERTGroup[ev.Schematic].Add(dto.ScriptGroup, new List<AMERTInteractable> { });
-                    AdvancedMERTools.Singleton.AMERTGroup[ev.Schematic][dto.ScriptGroup].Add(tclass);
+                    if (dto.ScriptGroup != null && dto.ScriptGroup != "")
+                        AdvancedMERTools.Singleton.AMERTGroup[ev.Schematic][dto.ScriptGroup].Add(tclass);
                 }
             }
         }
@@ -369,6 +370,7 @@ namespace AdvancedMERTools
 
         public static Transform FindObjectWithPath(Transform target, string pathO)
         {
+            pathO = pathO.Trim();
             if (pathO != "")
             {
                 string[] path = pathO.Split(' ');
