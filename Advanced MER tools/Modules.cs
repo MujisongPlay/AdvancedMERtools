@@ -361,6 +361,11 @@ public class Commanding : RandomExecutionModule
 public class FCommanding : FRandomExecutionModule
 {
 	public ScriptValue CommandContext;
+
+    public override void OnValidate()
+    {
+		CommandContext.OnValidate();
+    }
 }
 
 [Serializable]

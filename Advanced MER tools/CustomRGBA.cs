@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -36,19 +36,24 @@ public class CustomRGBA : MonoBehaviour
         {
             foreach (PrimitiveComponent component in transform.GetComponentsInChildren<PrimitiveComponent>())
             {
-                component.Color = new Color(R / 255f, G / 255f, B / 255f, A);
-                MeshRenderer renderer = component.gameObject.GetComponent<MeshRenderer>();
-                if (_sharedRegular == null)
-                    _sharedRegular = new Material((Material)Resources.Load("Materials/Regular"));
-
-                if (_sharedTransparent == null)
-                    _sharedTransparent = new Material((Material)Resources.Load("Materials/Transparent"));
-
-                renderer.sharedMaterial = component.Color.a >= 1f ? _sharedRegular : _sharedTransparent;
-                renderer.sharedMaterial.color = component.Color;
+                Apply(component);
             }
             vs = new float[] { R, G, B, A };
         }
+    }
+
+    public void Apply(PrimitiveComponent component)
+    {
+        component.Color = new Color(R / 255f, G / 255f, B / 255f, A);
+        MeshRenderer renderer = component.gameObject.GetComponent<MeshRenderer>();
+        if (_sharedRegular == null)
+            _sharedRegular = new Material((Material)Resources.Load("Materials/Regular"));
+
+        if (_sharedTransparent == null)
+            _sharedTransparent = new Material((Material)Resources.Load("Materials/Transparent"));
+
+        renderer.sharedMaterial = component.Color.a >= 1f ? _sharedRegular : _sharedTransparent;
+        renderer.sharedMaterial.color = component.Color;
     }
 
     private static readonly Config Config = SchematicManager.Config;
@@ -86,6 +91,7 @@ public class CustomRGBA : MonoBehaviour
             CustomRGBA custom = primitive.gameObject.GetComponentInParent<CustomRGBA>();
             if (custom != null)
             {
+                custom.Apply(primitive);
                 SchematicBlockData data = list.Blocks.Find(x => x.ObjectId == primitive.transform.GetInstanceID());
                 if (data == null)
                 {

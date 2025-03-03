@@ -225,6 +225,7 @@ public class ArrUnaryOp : Value
         GetRandomValue,
         Shuffled,
         RemovedNull,
+        IsEmpty,
     }
 
     public ArrUnaryOpType Operator;
@@ -318,7 +319,7 @@ public class VecBinomialOp : Value
         AngleDifference,
         DotProduct,
         CrossProduct,
-        DirectionTowards,
+        DirectionTowards
     }
 
     public VecBiOpType Operator;
@@ -347,6 +348,8 @@ public class StrUnaryOp : Value
         ToInteger,
         ToReal,
         ToCharArray,
+        ToPlayerAsName,
+        ToItemAsName
     }
 
     public StrUnaryOpType Operator;
@@ -527,7 +530,41 @@ public class VMessageType : Value
 [Serializable]
 public class PlayerArray : Value
 {
-    public SendType Value;
+    public enum PlayerArrayType
+    {
+        AllPlayers,
+        AlivePlayers,
+        Scps,
+        ScpsExcludeScp0492,
+        Mtfs,
+        Chaos,
+        Dclass,
+        Scientist,
+        Spectators,
+        Guards,
+        FoundationSide,
+        AntiFoundationSide,
+        Humans,
+    }
+
+    public PlayerArrayType ArrayType;
+
+    public override void OnValidate()
+    {
+    }
+}
+
+[Serializable]
+public class SingleTarget : Value
+{
+    public enum SingleTargetType
+    {
+        EventPlayer,
+        SchematicEntity,
+        ScriptEntity,
+    };
+
+    public SingleTargetType TargetType;
 
     public override void OnValidate()
     {
@@ -551,5 +588,142 @@ public class VItemType : Value
 
     public override void OnValidate()
     {
+    }
+}
+
+[Serializable]
+public class VRoleType : Value
+{
+    public RoleTypeId Value;
+
+    public override void OnValidate()
+    {
+    }
+}
+
+[Serializable]
+public class ItemUnaryOp : Value
+{
+    [Serializable]
+    public enum ItemUnaryOpType
+    {
+        ItemType,
+        Entity,
+        Owner,
+        PrevOwner
+    }
+
+    public ScriptValue ItemOrPickup;
+    public ItemUnaryOpType Operator;
+
+    public override void OnValidate()
+    {
+        ItemOrPickup.OnValidate();
+    }
+}
+
+[Serializable]
+public class PlayerUnaryOp : Value
+{
+    [Serializable]
+    public enum PlayerUnaryOpType
+    {
+        AHP,
+        Cuffer,
+        CurrentItem,
+        CurrentSpectatingPlayers,
+        CustomInfo,
+        CustomName,
+        DisplayNickname,
+        GroupName,
+        HP,
+        HumeShield,
+        Id,
+        IsAlive,
+        IsCHI,
+        IsCuffed,
+        IsDead,
+        IsFoundationSide,
+        IsFFon,
+        IsHuman,
+        IsInPocketDimension,
+        IsInventoryEmpty,
+        IsInventoryFull,
+        IsJumping,
+        IsNPC,
+        IsNTF,
+        IsReloading,
+        IsScp,
+        IsSpeaking,
+        IsTutorial,
+        IsUsingStamina,
+        Items,
+        MaxAHP,
+        MaxHP,
+        MaxHumeShield,
+        Position,
+        Role,
+        FacingDirection,
+        Scale,
+        Stamina,
+        EntityObject,
+        UniqueRole,
+        Velocity,
+    }
+
+    public PlayerUnaryOpType Operator;
+    public ScriptValue Player;
+
+    public override void OnValidate()
+    {
+        Player.OnValidate();
+    }
+}
+
+[Serializable]
+public class EntityUnaryOp : Value
+{
+    [Serializable]
+    public enum EntityUnaryOpType
+    {
+        Name,
+        Position,
+        Rotation,
+        Scale,
+        Parent,
+        IsActive,
+        ChildCount,
+        ToPlayer,
+        ToItem,
+    }
+
+    public EntityUnaryOpType Operator;
+    public ScriptValue Entity;
+
+    public override void OnValidate()
+    {
+        Entity.OnValidate();
+    }
+}
+
+[Serializable]
+public class EntityBinomialOp : Value
+{
+    [Serializable]
+    public enum EntityBinomialOpType
+    {
+        GetChildAt,
+        WorldToLocal,
+        LocalToWorld
+    }
+
+    public EntityBinomialOpType Operator;
+    public ScriptValue Entity;
+    public ScriptValue Value;
+
+    public override void OnValidate()
+    {
+        Entity.OnValidate();
+        Value.OnValidate();
     }
 }

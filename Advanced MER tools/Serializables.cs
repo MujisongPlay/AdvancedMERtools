@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections;
@@ -279,6 +279,69 @@ public enum InvokeType
 {
 	Searching = 1,
 	Picked = 2
+}
+
+[Serializable]
+public enum RoleTypeId : sbyte
+{
+	// Token: 0x04000F02 RID: 3842
+	None = -1,
+	// Token: 0x04000F03 RID: 3843
+	Scp173,
+	// Token: 0x04000F04 RID: 3844
+	ClassD,
+	// Token: 0x04000F05 RID: 3845
+	Spectator,
+	// Token: 0x04000F06 RID: 3846
+	Scp106,
+	// Token: 0x04000F07 RID: 3847
+	NtfSpecialist,
+	// Token: 0x04000F08 RID: 3848
+	Scp049,
+	// Token: 0x04000F09 RID: 3849
+	Scientist,
+	// Token: 0x04000F0A RID: 3850
+	Scp079,
+	// Token: 0x04000F0B RID: 3851
+	ChaosConscript,
+	// Token: 0x04000F0C RID: 3852
+	Scp096,
+	// Token: 0x04000F0D RID: 3853
+	Scp0492,
+	// Token: 0x04000F0E RID: 3854
+	NtfSergeant,
+	// Token: 0x04000F0F RID: 3855
+	NtfCaptain,
+	// Token: 0x04000F10 RID: 3856
+	NtfPrivate,
+	// Token: 0x04000F11 RID: 3857
+	Tutorial,
+	// Token: 0x04000F12 RID: 3858
+	FacilityGuard,
+	// Token: 0x04000F13 RID: 3859
+	Scp939,
+	// Token: 0x04000F14 RID: 3860
+	CustomRole,
+	// Token: 0x04000F15 RID: 3861
+	ChaosRifleman,
+	// Token: 0x04000F16 RID: 3862
+	ChaosMarauder,
+	// Token: 0x04000F17 RID: 3863
+	ChaosRepressor,
+	// Token: 0x04000F18 RID: 3864
+	Overwatch,
+	// Token: 0x04000F19 RID: 3865
+	Filmmaker,
+	// Token: 0x04000F1A RID: 3866
+	Scp3114,
+	// Token: 0x04000F1B RID: 3867
+	Destroyed,
+	// Token: 0x04000F1C RID: 3868
+	Flamingo,
+	// Token: 0x04000F1D RID: 3869
+	AlphaFlamingo,
+	// Token: 0x04000F1E RID: 3870
+	ZombieFlamingo
 }
 
 public class PublicFunctions

@@ -91,6 +91,10 @@ public class ScriptAction
         { FunctionType.Explode, typeof(Explode) },
         { FunctionType.GiveEffect, typeof(GiveEffect) },
         { FunctionType.PlayAudio, typeof(PlayAudio) },
+        { FunctionType.Warhead, typeof(FWarhead) },
+        { FunctionType.ChangePlayerValue, typeof(ChangePlayerValue) },
+        { FunctionType.PlayerAction, typeof(PlayerAction) },
+        { FunctionType.ChangeEntityValue, typeof(ChangeEntityValue) }
     };
 }
 
@@ -117,6 +121,10 @@ public enum FunctionType
     Explode,
     GiveEffect,
     PlayAudio,
+    Warhead,
+    ChangePlayerValue,
+    PlayerAction,
+    ChangeEntityValue
 }
 
 [Serializable]
@@ -201,7 +209,13 @@ public class ScriptValue
         { ValueType.MessageType, typeof(VMessageType) },
         { ValueType.PlayerArray, typeof(PlayerArray) },
         { ValueType.Scp914Mode, typeof(VScp914Mode) },
-        { ValueType.ItemType, typeof(VItemType) }
+        { ValueType.ItemType, typeof(VItemType) },
+        { ValueType.RoleType, typeof(VRoleType) },
+        { ValueType.PlayerUnaryOp, typeof(PlayerUnaryOp) },
+        { ValueType.SingleTarget, typeof(SingleTarget) },
+        { ValueType.ItemUnaryOp, typeof(ItemUnaryOp) },
+        { ValueType.EntityUnaryOp, typeof(EntityUnaryOp) },
+        { ValueType.EntityBinomialOp, typeof(EntityBinomialOp) }
     };
 }
 
@@ -212,6 +226,7 @@ public enum ValueType
     Real,
     Bool,
     String,
+    Null,
     Compare,
     IfThenElse,
     EmptyArray,
@@ -236,7 +251,6 @@ public enum ValueType
     CollisionDetectTarget,
     EffectType,
     EffectActionType,
-    TeleportInvokeType,
     WarheadActionType,
     AnimationActionType,
     ParameterType,
@@ -244,6 +258,12 @@ public enum ValueType
     PlayerArray,
     Scp914Mode,
     ItemType,
+    RoleType,
+    SingleTarget,
+    ItemUnaryOp,
+    PlayerUnaryOp,
+    EntityUnaryOp,
+    EntityBinomialOp
 }
 
 [Serializable]

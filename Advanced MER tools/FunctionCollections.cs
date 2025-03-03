@@ -222,3 +222,64 @@ public class PlayAudio : Function
         AudioModules.ForEach(x => x.OnValidate());
     }
 }
+
+[Serializable]
+public class FWarhead : Function
+{
+    public ScriptValue ActionType;
+
+    public override void OnValidate()
+    {
+        ActionType.OnValidate();
+    }
+}
+
+[Serializable]
+public class ChangePlayerValue : Function
+{
+    public ScriptValue player;
+    public PlayerUnaryOp.PlayerUnaryOpType ValueType;
+    public ScriptValue Value;
+
+    public override void OnValidate()
+    {
+        player.OnValidate();
+        Value.OnValidate();
+    }
+}
+
+[Serializable]
+public class PlayerAction : Function
+{
+    [Serializable]
+    public enum PlayerActionType
+    {
+        GiveItem,
+        DropItem,
+        RemoveItem
+    }
+
+    public ScriptValue Player;
+    public PlayerActionType ActionType;
+    public ScriptValue Argument;
+
+    public override void OnValidate()
+    {
+        Player.OnValidate();
+        Argument.OnValidate();
+    }
+}
+
+[Serializable]
+public class ChangeEntityValue : Function
+{
+    public ScriptValue Entity;
+    public EntityUnaryOp.EntityUnaryOpType ValueType;
+    public ScriptValue Value;
+
+    public override void OnValidate()
+    {
+        Entity.OnValidate();
+        Value.OnValidate();
+    }
+}
