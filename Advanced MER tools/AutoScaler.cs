@@ -1,7 +1,10 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class AutoScaler : MonoBehaviour
 {
@@ -16,11 +19,16 @@ public class AutoScaler : MonoBehaviour
             Vector3 v2 = game.eulerAngles;
             Vector3 v3 = game.lossyScale;
             pairs.Add(game, new Values(IsEmpty(game.gameObject) && ResetPos ? Vector3.zero : new Vector3(v1.x, v1.y, v1.z),
-                IsEmpty(game.gameObject) && ResetRot ? Vector3.zero : new Vector3(v2.x, v2.y, v2.z), 
+                IsEmpty(game.gameObject) && ResetRot ? Vector3.zero : new Vector3(v2.x, v2.y, v2.z),
                 IsEmpty(game.gameObject) && ResetScl ? Vector3.one : new Vector3(v3.x, v3.y, v3.z)));
         }
         List<Transform> list = new List<Transform> { };
         list.AddRange(this.transform.GetComponentsInChildren<Transform>());
+
+#if UNITY_EDITOR
+        Undo.RecordObjects(list.ConvertAll(t => (Object)t).ToArray(), "Auto Scale Adjustments");
+#endif
+
         list.ForEach(x =>
         {
             Values values = pairs[x];
